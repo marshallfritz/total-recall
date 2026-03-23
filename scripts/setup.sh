@@ -128,10 +128,63 @@ fi
 chmod +x "$SKILL_DIR/scripts/"*.sh
 echo "✅ Scripts made executable"
 
-# --- Install systemd watcher service (Linux only) ---
-if has_inotify && has_systemd_user; then
+# --- Install reactive watcher service ---
+if $_IS_MACOS; then
   echo ""
-  echo "Installing reactive watcher service..."
+  echo "Installing macOS reactive watcher (fswatch + LaunchAgent)..."
+  if ! command -v fswatch &>/dev/null; then
+    if command -v brew &>/dev/null; then
+      echo "   Installing fswatch via Homebrew..."
+      brew install fswatch
+    else
+      echo "⚠️  fswatch not found and Homebrew not available."
+      echo "   Install fswatch manually: brew install fswatch"
+      echo "   Then re-run setup to install the watcher service."
+    fi
+  fi
+  if command -v fswatch &>/dev/null; then
+    PLIST_DIR="$HOME/Library/LaunchAgents"
+    PLIST_FILE="$PLIST_DIR/ai.openclaw.total-recall-watcher.plist"
+    mkdir -p "$PLIST_DIR"
+    cat > "$PLIST_FILE" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>ai.openclaw.total-recall-watcher</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>$SKILL_DIR/scripts/observer-watcher-macos.sh</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>OPENCLAW_WORKSPACE</key>
+        <string>$WORKSPACE</string>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>$WORKSPACE/logs/observer-watcher.log</string>
+    <key>StandardErrorPath</key>
+    <string>$WORKSPACE/logs/observer-watcher.log</string>
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+</dict>
+</plist>
+EOF
+    launchctl unload "$PLIST_FILE" 2>/dev/null || true
+    launchctl load "$PLIST_FILE"
+    echo "✅ macOS watcher LaunchAgent installed and started"
+  fi
+elif has_inotify && has_systemd_user; then
+  echo ""
+  echo "Installing reactive watcher service (Linux/systemd)..."
   SYSTEMD_DIR="$HOME/.config/systemd/user"
   mkdir -p "$SYSTEMD_DIR"
 
@@ -157,7 +210,7 @@ EOF
   echo "✅ Watcher service installed and started"
 else
   echo ""
-  echo "ℹ️  Skipping reactive watcher service (requires Linux + systemd + inotify-tools)"
+  echo "ℹ️  Skipping reactive watcher service (requires macOS+fswatch or Linux+systemd+inotify-tools)"
   echo "   The cron-based observer (every 15 min) provides full coverage without it."
 fi
 
