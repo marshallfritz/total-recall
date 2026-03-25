@@ -34,7 +34,7 @@ The `dc:date` is the date the observation REFERS TO (which may differ from today
 - **0:** Should probably not have been recorded at all (consider omitting entirely)
 
 ### Scoring guide:
-- **CRITICAL: Score HARD.** Most observations should land at 1-4. Only genuinely important items deserve 5+. If in doubt, score LOWER.
+- **CRITICAL: Score HONESTLY.** The Write/Don't Write Gate handles filtering — do not use low scores as a substitute for the gate. Items that pass the gate should be scored on their actual signal value (typically 6.5–9.0). If in doubt about whether to write something, apply the gate — not a low score.
 - Automated/cron/scheduled actions (briefings sent, scripts executed, tokens refreshed, auto-updates, preflight checks) are ALWAYS 1-2. No exceptions. These are operational noise.
 - User decisions score higher than routine assistant actions (searching, formatting)
 - Assistant actions with external consequences (publishing, sending, deploying, deleting) score as equivalent to user decisions
@@ -44,6 +44,83 @@ The `dc:date` is the date the observation REFERS TO (which may differ from today
 - Errors/bugs that affect the user score 6+
 - Routine cron completions score 1-2
 - The emoji priority (🔴🟡🟢) should broadly align: 🔴=6-10, 🟡=3-6, 🟢=0-3
+
+### CGP (Conversation Governance Protocol) — ELEVATED SCORING RULES
+The user works on a project called CGP/PeP (Pensive Protocol) with repos `cre` and `hai-os`.
+Work happens in burst sessions with multi-day gaps (weekends away). Items must survive at least 7 days.
+Apply these floors — do NOT score below them even if the item seems routine:
+
+- **`;µdl` / `;dn` signals** (heavyweight decision, doc sync required) → score **9.0 minimum**, type=rule — if not yet committed to cre decision-ledger.md, flag as ACTION REQUIRED
+- **D# decisions** (e.g. D141, D142) referenced by number → score **8.5 minimum**, type=rule
+- **Architectural invariants** (phrases like "invariant", "must remain true", "hard constraint") → score **8.0 minimum**, type=rule
+- **Working set artifacts** (`;ws` prompts, `;wc` continuation capsules, `;ol` checkpoints) → score **8.0 minimum**, type=goal
+- **Milestone gates and verdicts** (Milestone A/B/C/D, gate pass/fail, S# session designations) → score **8.0 minimum**, type=goal
+- **Named schemas, tools, or code artifacts produced in session** (e.g. fixture.schema.json, dv_score_tool.py, oc_normalizer.py) → score **7.5 minimum**, type=fact
+- **MVPP / Wave experiments** (Minimum Viable Proof Plan, Wave 1/2/3 runs) → score **8.0 minimum**, type=goal
+- **Active workstream state** (open threads, blocked items, next steps explicitly stated) → score **7.5 minimum**, type=goal
+- **PRB artifacts and DV (Déjà Vu) pipeline decisions** → score **8.0 minimum**, type=rule
+- **SF_STATE fields and Solid Foundation gate results** → score **8.0 minimum**, type=rule
+- **Repo commits that close a D# or advance a milestone** → score **7.5 minimum**, type=event
+- **`;ol` checkpoint outputs** (proposed OC-# topic ledger entries, milestone close summaries) → score **8.5 minimum**, type=goal — these MUST reach the hai-os repo or they are lost
+- **`;oc` milestone close outputs** (session close artifacts, fork capsules, PRB commits) → score **8.5 minimum**, type=goal — mark as action-required if not yet committed
+- **`;of` fork capsule outputs** (state captured at fork boundary, next session target) → score **8.5 minimum**, type=goal — fork capsules carry equivalent weight to `;oc` artifacts
+- **`;wc` continuation capsule outputs** (dedicated floor, not inherited from `;ws`) → score **8.0 minimum**, type=goal
+- **`;wd` working design session outputs** → score **7.5 minimum**, type=goal
+- **`;sp` PRB candidacy assessment** → score **8.0 minimum**, type=goal — part of DV pipeline
+- **`;pb` PRB emit** (PRB artifact produced) → score **8.5 minimum**, type=goal — ACTION REQUIRED if not committed; directly feeds DV restart experiments
+- **`;ss` session summary** (proposed OC-# topic ledger entry) → score **8.5 minimum**, type=goal — directly produces topic ledger candidates for hai-os
+- **`;sr` session reports** (open threads, recommended close action) → score **7.5 minimum**, type=goal — open threads must survive
+- **`;nx` next action lists** → score **7.5 minimum**, type=goal — contains active task queue
+- **`;µws` / `;wm` scope refocus outputs** → score **7.0 minimum**, type=context
+- **`;dl` decision ledger consolidation outputs** → score **7.5 minimum**, type=fact
+- **`;rv` architecture review findings** → score **7.0 minimum**, type=fact
+- **`;fd` frontier declaration** → score **7.5 minimum**, type=goal — defines forward direction
+- **`;ex` thread excision** → score **6.5 minimum**, type=event — closure of a thread
+- **`;we` working set extraction** (recovery of prior session state) → score **8.0 minimum**, type=goal — used in gate sessions
+- **`;wp` working set prompt build** → score **7.5 minimum**, type=goal
+- **Entropy corrections** (`;tx`, `;sf`, `;ns`) → score **6.5 minimum**, type=context — restatement of eliminated paths or steering corrections
+- **OC-# topic ledger entries** (e.g. OC-012, OC-013) whether proposed or committed → score **8.5 minimum**, type=rule
+- **Proposed but uncommitted governance items** (anything described as "pending", "proposed", "awaiting commit", or "not yet in ledger") → score **9.0 minimum**, type=rule — these are the highest-risk items for weekend gaps
+
+### CGP Glossary (for accurate classification):
+- CGP — Conversation Governance Protocol (the governance system Marshall uses)
+- PeP — Pensive Protocol (the operator-level governance layer)
+- D# — Decision number in the decision ledger (cre repo). These are authoritative and permanent.
+- CRE — Conversation Replay Engine (core substrate repo)
+- CTM — Conversation Time Machine (structural reasoning layer)
+- DV / Déjà Vu — restart artifact compiler
+- PRB — Prior Reasoning Block (structured restart artifact)
+- MVPP — Minimum Viable Proof Plan (the restart fidelity experiment)
+- Wave 1/2/3 — MVPP experiment runs across N sessions
+- ;µdl / ;dn — Heavyweight decision signal (L1). Triggers doc sync to decision-ledger.md in cre. Produces a new D# entry. THIS IS THE MOST CRITICAL SIGNAL — if uncommitted, a D# is lost.
+- ;dm — Lightweight decision log entry (L2, no doc sync required). Memory write only.
+- ;dl — Decision ledger consolidation signal
+- ;µws / ;wm — Scope drift signal; triggers working set refocus
+- ;ws — Working Set signal (starts a focused workstream)
+- ;wc — Working Set Continuation capsule
+- ;wd — Working Design signal
+- ;ol — Checkpoint signal; produces proposed OC-# topic ledger entries for hai-os repo
+- ;oc — Milestone close signal; produces session close artifacts, fork capsules, PRB commits for cre repo
+- ;of — Fork signal; produces Fork Capsule containing full state at fork boundary for next session
+- ;sp — Session PRB Check; assesses whether current session is a PRB candidate
+- ;pb — PRB Emit; produces PRB_EMIT_PROMPT_v1.0 artifact (Prior Reasoning Block for DV pipeline)
+- ;ss — Session Summary; produces proposed OC-# topic ledger entry for hai-os
+- ;we — Working Set Extraction; recovers state from a prior session transcript (no Fork Capsule present)
+- ;wp — Working Set Prompt Build; constructs a prompt targeting a specific prior session
+- ;nx — Next Actions; extracts most productive immediate and follow-up prompts
+- ;rv — Architecture Review; reviews design for strengths, risks, gaps, next adjustment
+- ;fd — Frontier Declaration; operator declares forward target; model assesses
+- ;ex — Excise; declaratively closes a thread (replaces ;of excise mode)
+- ;ot — Open Thread; creates an open thread entry
+- ;sr — Session Report; assesses session health, entropy, recommended close action
+- ;ax — Apex Charm; on-demand apex assessment (low frequency, on-demand only)
+- CGP_OP_TX / ;tx — Entropy corrective: topic excision (identify dead branches)
+- CGP_OP_SF / ;sf — Entropy corrective: steering frame (re-anchor to active objective)
+- CGP_OP_NS / ;ns — Entropy corrective: negative space reinforce (restate eliminated paths)
+- OC-# — Topic ledger entry number in hai-os/docs/sessions/topic-ledger.yaml
+- SF_STATE — Solid Foundation State (maturity gate tracking YAML in cre repo)
+- hai-os — governance repo (PeP protocols, topic ledger, ROE, environment bootstrap)
+- cre — implementation repo (CRE, CTM, DV, decision ledger, milestones, evaluation harness)
 
 ## Temporal Anchoring
 When a message references a future or past date, include BOTH:
@@ -72,6 +149,79 @@ Consider WHEN things were said, not just WHAT was said. The timestamp is part of
 - When in doubt, it's a duplicate. Skip it.
 - Only output genuinely NEW observations not covered by existing entries
 - If all events were already recorded, output: NO_OBSERVATIONS
+
+## CGP Snippet Detection (MANDATORY SCAN)
+Before writing any observations, scan the full transcript for these signals.
+Each one found MUST produce at least one observation — do not skip or summarize away.
+
+**Signals to detect and record explicitly:**
+- `;µdl` or `;dn` — **HIGHEST PRIORITY**. Heavyweight decision signal. Triggers doc sync to decision-ledger.md in cre repo. Extract: proposed D# number, decision text, whether commit was made or is pending. Score 9.0. Flag as action-required if not yet committed to cre.
+- `;dm` — Lightweight decision log. Extract: the decision text verbatim. Score 8.5. No doc sync required but must be preserved.
+- `;ol` — extract: what checkpoint was closed, what OC-# entries were proposed, which repos need commits. Score 8.5.
+- `;oc` — extract: what milestone closed, what artifacts were produced (fork capsule, PRB, commit hash). Score 8.5.
+- `;of` — extract: fork capsule contents, what state was captured at the fork boundary, what the next session target is. Score 8.5.
+- `;wc` — extract: what working set continuation was defined, what the next session target is. Score 8.0.
+- `;ws` — extract: what workstream was opened, what the goal and constraints are. Score 8.0.
+- `;wd` — extract: design session goal, outcome criteria. Score 7.5.
+- `;sp` — extract: PRB candidacy verdict, what session was assessed. Score 8.0.
+- `;pb` — extract: PRB artifact produced, what session it covers, whether committed. Score 8.5. Flag ACTION REQUIRED if not committed.
+- `;ss` — extract: session summary text, proposed OC-# topic ledger entry. Score 8.5.
+- `;we` — extract: what prior session was being recovered, what was extracted. Score 8.0.
+- `;wp` — extract: what prompt was built, what session it targets. Score 7.5.
+- `;sr` — extract: topic count, open threads, recommended action. Score 7.5.
+- `;nx` — extract: the immediate and follow-up next actions listed. Score 7.5.
+- `;rv` — extract: architectural findings, risks, gaps, recommendations. Score 7.0.
+- `;fd` — extract: the frontier target declared. Score 7.5.
+- `;ex` — extract: what thread was excised, why. Score 6.5.
+- `;µws` or `;wm` — extract: what drift was identified, what the refocused scope is. Score 7.0.
+- `;dl` — decision ledger consolidation; extract: what decisions were consolidated. Score 7.5.
+- `;ot` — extract: the open thread text verbatim. Score 6.0.
+- `CGP_OP_TX` / `;tx` — entropy correction (topic excision); extract: what branches were identified as dead. Score 6.5.
+- `CGP_OP_SF` / `;sf` — entropy correction (steering frame); extract: what objective was re-anchored. Score 6.5.
+- `CGP_OP_NS` / `;ns` — entropy correction (negative space reinforce); extract: what eliminated paths were restated. Score 6.5.
+- Any `OC-#` mention — record the OC number, what it covers, whether it's committed or proposed
+- Any `D###` mention — record the D number, the decision text, whether it's in the ledger
+- Any phrase like "not yet committed", "pending", "proposed but not merged", "awaiting doc sync" — score 9.0, flag as action-required
+
+**Format for snippet observations:**
+```
+- 🔴 HH:MM ;ol checkpoint: [what closed] — proposed OC-NNN "[topic]" for hai-os topic ledger <!-- dc:type=goal dc:importance=8.5 dc:date=YYYY-MM-DD -->
+- 🔴 HH:MM ;oc milestone close: [Milestone X / Session S#] — fork capsule and PRB committed at [hash] <!-- dc:type=goal dc:importance=8.5 dc:date=YYYY-MM-DD -->
+- 🔴 HH:MM D143 decision: "[decision text]" — [committed/proposed/pending] <!-- dc:type=rule dc:importance=8.5 dc:date=YYYY-MM-DD -->
+```
+
+## Write/Don't Write Gate (MANDATORY — run before writing any observation)
+
+An observation is written ONLY if at least one of these is true:
+- **(A)** Importance score is ≥ 6.5 after applying all CGP floors above
+- **(B)** Item contains an unresolved/pending marker:
+  "not yet committed" / "never finalized" / "drafted but" / "deferred" /
+  "pending" / "open question" / "not yet applied" / "not in current release" /
+  "not yet in" / "carried forward" / "open thread" / "not committed" / "awaiting"
+- **(C)** Item is a CGP snippet signal (`;µdl`, `;dn`, `;ol`, `;oc`, `;of`,
+  `;pb`, D#, OC-#, etc.)
+
+Do NOT write if ALL of the following are true:
+- Importance would be < 6.5
+- No unresolved/pending marker present
+- No CGP snippet signal present
+- Item falls into any of these categories:
+  - Observer / Reflector / Dream Cycle ran with no output ("ran cleanly", "nothing to process")
+  - "User confirmed" / "user said yes" / "user agreed" / acknowledgment only
+  - Process step describing HOW an action was taken (vs. WHAT resulted)
+  - Message source metadata (gateway client name, device info, untrusted client)
+  - Child observation that merely restates its parent in different words
+  - Status check where status was unremarkable
+
+Items that genuinely matter will pass gate A, B, or C naturally.
+Do not inflate importance scores to pass the gate.
+
+### Rules and preferences go to constants.md, not observations.md
+When you observe a new operational rule, user preference, or CGP invariant
+that should persist permanently: write it to `memory/constants.md` directly,
+not observations.md. Format: brief heading + one-sentence rule + date learned.
+constants.md is agent-editable — if a rule is superseded, update it (git
+records the history). Do NOT write to observations.md items already in constants.md.
 
 ## Guidelines
 - Be DENSE — every word should carry information
