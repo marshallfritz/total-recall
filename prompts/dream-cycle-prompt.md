@@ -431,6 +431,7 @@ Write metrics JSON exactly with fields:
 - No pattern promotion in Phase 1 (DREAM_PHASE < 2).
 - Use atomic write flow via script subcommands.
 - If uncertain about a borderline item, keep it active and note in `Flagged for Review`.
+- **Frontier protection (hard rule):** Never archive or collapse observations containing any of the following keywords: `frontier`, `open question`, `OQ-`, `unresolved branch`, `paths_ruled_out`. These are active research signals. Retain them unconditionally regardless of age or importance score.
 
 ---
 
