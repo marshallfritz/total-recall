@@ -43,7 +43,24 @@ token_count() {
 
 require_file() {
   local path="$1"
-  [ -f "$path" ] || { err "Required file missing: $path"; exit 1; }
+  # If file exists as-is, use it
+  if [ -f "$path" ]; then
+    return 0
+  fi
+  # Otherwise try to find a file matching the date pattern (handles YYYY-MM-DD-*.md naming)
+  local dir
+  local base
+  local today_pattern
+  dir=$(dirname "$path")
+  base=$(basename "$path" .md)
+  today_pattern="$dir/${base}*.md"
+  local found_file
+  found_file=$(ls $today_pattern 2>/dev/null | head -n 1)
+  if [ -n "$found_file" ] && [ -f "$found_file" ]; then
+    return 0
+  fi
+  err "Required file missing: $path (or pattern $today_pattern)"
+  exit 1
 }
 
 STAGING_DIR="$MEMORY_DIR/dream-staging"
