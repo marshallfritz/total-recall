@@ -33,6 +33,24 @@ LOCK_FILE="$WORKSPACE/logs/reflector.lock"
 DREAM_LOCK_FILE="$WORKSPACE/logs/dream-cycle.lock"
 DREAM_LOCK_MAX_AGE=1500  # 25 min — matches dream-cycle.sh ceiling
 
+# Read expiry from self-describing lock file (format: PID:CREATED:EXPIRES)
+# Falls back to mtime-based check for legacy lock files.
+# NOTE: Keep in sync with dream-cycle.sh, preflight-archive.sh, observer-watcher-macos.sh
+# See: cre/TRStrategyBootstrap.md §Lock Format
+dream_lock_is_active() {
+  local lock_file="$1"
+  [ -f "$lock_file" ] || return 1  # no lock = not active
+  local expires
+  expires=$(cut -d: -f3 "$lock_file" 2>/dev/null)
+  if [[ "$expires" =~ ^[0-9]+$ ]]; then
+    [ "$(date +%s)" -lt "$expires" ]  # active if current time < expiry
+  else
+    # Legacy mtime fallback
+    local age=$(( $(date +%s) - $(file_mtime "$lock_file") ))
+    [ "$age" -lt "$DREAM_LOCK_MAX_AGE" ]
+  fi
+}
+
 # Source env if available (grep-guard: only export KEY=VALUE lines)
 if [ -f "$WORKSPACE/.env" ]; then
   set -a
@@ -64,13 +82,13 @@ fi
 
 # --- Dream Cycle lock check (suspend Observer while Dream Cycle is running) ---
 if [ -f "$DREAM_LOCK_FILE" ]; then
-  DREAM_LOCK_AGE=$(( $(date +%s) - $(file_mtime "$DREAM_LOCK_FILE") ))
-  if [ "$DREAM_LOCK_AGE" -lt "$DREAM_LOCK_MAX_AGE" ]; then
-    log "Dream Cycle lock active (${DREAM_LOCK_AGE}s old) — suspending Observer until run completes"
+  if dream_lock_is_active "$DREAM_LOCK_FILE"; then
+    expires=$(cut -d: -f3 "$DREAM_LOCK_FILE" 2>/dev/null || echo "?")
+    log "Dream Cycle lock active (expires: ${expires}) — suspending Observer until run completes"
     echo "SKIPPED_DREAM_CYCLE_RUNNING"
     exit 0
   else
-    log "Stale Dream Cycle lock (${DREAM_LOCK_AGE}s old, max ${DREAM_LOCK_MAX_AGE}s) — removing and proceeding"
+    log "Stale Dream Cycle lock (expiry passed) — removing and proceeding"
     rm -f "$DREAM_LOCK_FILE"
   fi
 fi

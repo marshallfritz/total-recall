@@ -20,6 +20,23 @@ MARKER_FILE="/tmp/observer-watcher-macos-lastrun"
 COOLDOWN_SECS="${OBSERVER_COOLDOWN_SECS:-300}"
 DREAM_LOCK_FILE="$WORKSPACE/logs/dream-cycle.lock"
 DREAM_LOCK_MAX_AGE=1500
+
+# Read expiry from self-describing lock file (format: PID:CREATED:EXPIRES)
+# Falls back to mtime-based check for legacy lock files.
+# NOTE: Keep in sync with dream-cycle.sh, preflight-archive.sh, observer-agent.sh
+# See: cre/TRStrategyBootstrap.md §Lock Format
+dream_lock_is_active() {
+  local lock_file="$1"
+  [ -f "$lock_file" ] || return 1
+  local expires
+  expires=$(cut -d: -f3 "$lock_file" 2>/dev/null)
+  if [[ "$expires" =~ ^[0-9]+$ ]]; then
+    [ "$(date +%s)" -lt "$expires" ]
+  else
+    local age=$(( $(date +%s) - $(file_mtime "$lock_file") ))
+    [ "$age" -lt "$DREAM_LOCK_MAX_AGE" ]
+  fi
+}
 LINE_THRESHOLD="${OBSERVER_LINE_THRESHOLD:-40}"
 LOG="$WORKSPACE/logs/observer-watcher.log"
 PIDFILE="/tmp/total-recall-watcher-macos-$(id -u).pid"
@@ -91,12 +108,13 @@ in_cooldown() {
 
 dream_cycle_running() {
   [ -f "$DREAM_LOCK_FILE" ] || return 1
-  local age=$(( $(date +%s) - $(file_mtime "$DREAM_LOCK_FILE") ))
-  if [ "$age" -lt "$DREAM_LOCK_MAX_AGE" ]; then
+  if dream_lock_is_active "$DREAM_LOCK_FILE"; then
     return 0  # lock is fresh — dream cycle running
   fi
   # Stale lock — remove it and return false
-  log "Stale Dream Cycle lock (${age}s), removing"
+  local expires
+  expires=$(cut -d: -f3 "$DREAM_LOCK_FILE" 2>/dev/null || echo "?")
+  log "Stale Dream Cycle lock (expires: ${expires}), removing"
   rm -f "$DREAM_LOCK_FILE"
   return 1
 }
