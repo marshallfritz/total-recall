@@ -94,6 +94,29 @@ git_snapshot() {
 DREAM_LOCK_FILE="$OPENCLAW_WORKSPACE/logs/dream-cycle.lock"
 DREAM_LOCK_MAX_AGE=1500  # 25 min — safely above the 1200s cron timeout
 
+# Read expiry epoch from a self-describing lock file (format: PID:CREATED:EXPIRES)
+# Falls back to mtime-based check for legacy lock files.
+lock_is_expired() {
+  local lock_file="$1"
+  [ -f "$lock_file" ] || return 0  # no lock = expired (treat as clear)
+  local expires
+  expires=$(cut -d: -f3 "$lock_file" 2>/dev/null)
+  if [[ "$expires" =~ ^[0-9]+$ ]]; then
+    [ "$(date +%s)" -gt "$expires" ]
+  else
+    # Legacy format — fall back to mtime
+    local lock_age=$(( $(date +%s) - $(stat -f %m "$lock_file" 2>/dev/null || echo 0) ))
+    [ "$lock_age" -gt "$DREAM_LOCK_MAX_AGE" ]
+  fi
+}
+
+write_lock() {
+  local created expires
+  created=$(date +%s)
+  expires=$(( created + DREAM_LOCK_MAX_AGE ))
+  echo "$$:${created}:${expires}" > "$DREAM_LOCK_FILE"
+}
+
 cmd_preflight() {
   local dry_run="false"
   if [ "${1:-}" = "--dry-run" ]; then
@@ -104,23 +127,24 @@ cmd_preflight() {
   [ -f "$FAVORITES_FILE" ] || { mkdir -p "$MEMORY_DIR"; printf "# Favorites\n\n(No favorites recorded yet.)\n" > "$FAVORITES_FILE"; }
   ensure_dirs
 
-  # Abort if a Dream Cycle is already running (stale lock guard also handled in hc-runbook)
+  # Abort if a Dream Cycle is already running (stale lock auto-cleared via expiry field)
   if [ "$dry_run" = "false" ] && [ -f "$DREAM_LOCK_FILE" ]; then
-    local lock_age=$(( $(date +%s) - $(stat -f %m "$DREAM_LOCK_FILE" 2>/dev/null || echo 0) ))
-    if [ "$lock_age" -lt "$DREAM_LOCK_MAX_AGE" ]; then
-      info "{\"status\":\"error\",\"command\":\"preflight\",\"reason\":\"lock_exists\",\"lock_file\":\"$DREAM_LOCK_FILE\",\"lock_age_seconds\":$lock_age}"
-      error "Dream Cycle already running (lock age: ${lock_age}s). Aborting to prevent race condition."
-      exit 1
-    else
-      warn "Stale lock detected (age: ${lock_age}s > ${DREAM_LOCK_MAX_AGE}s). Removing and proceeding."
+    if lock_is_expired "$DREAM_LOCK_FILE"; then
+      warn "Stale lock detected (expiry passed). Removing and proceeding."
       rm -f "$DREAM_LOCK_FILE"
+    else
+      local expires
+      expires=$(cut -d: -f3 "$DREAM_LOCK_FILE" 2>/dev/null || echo "?")
+      info "{\"status\":\"error\",\"command\":\"preflight\",\"reason\":\"lock_exists\",\"lock_file\":\"$DREAM_LOCK_FILE\",\"expires\":$expires}"
+      error "Dream Cycle already running (lock expires: ${expires}). Aborting to prevent race condition."
+      exit 1
     fi
   fi
 
-  # Write dream-cycle lock so Observer skips during this run
+  # Write self-describing lock (PID:CREATED:EXPIRES) so Observer skips during this run
   if [ "$dry_run" = "false" ]; then
-    echo "$$:$(ISO_STAMP_UTC)" > "$DREAM_LOCK_FILE"
-    info "Dream-cycle lock written: $DREAM_LOCK_FILE"
+    write_lock
+    info "Dream-cycle lock written: $DREAM_LOCK_FILE (expires $(cut -d: -f3 "$DREAM_LOCK_FILE"))"
   fi
 
   local backup_file="$BACKUP_DIR/observations.pre-dream.md"

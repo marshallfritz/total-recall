@@ -28,24 +28,41 @@ log() {
 
 log "=== Preflight archive START ==="
 
-# ── Check for active Dream Cycle lock ────────────────────────────────────────
+# ── Lock helpers (self-describing format: PID:CREATED:EXPIRES) ───────────────
 DREAM_LOCK="$WORKSPACE/logs/dream-cycle.lock"
 DREAM_LOCK_MAX_AGE=1500  # 25 min — matches dream-cycle.sh ceiling
+
+lock_is_expired() {
+  local lock_file="$1"
+  [ -f "$lock_file" ] || return 0
+  local expires
+  expires=$(cut -d: -f3 "$lock_file" 2>/dev/null)
+  if [[ "$expires" =~ ^[0-9]+$ ]]; then
+    [ "$(date +%s)" -gt "$expires" ]
+  else
+    local lock_age=$(( $(date +%s) - $(stat -f %m "$lock_file" 2>/dev/null || echo 0) ))
+    [ "$lock_age" -gt "$DREAM_LOCK_MAX_AGE" ]
+  fi
+}
+
+# ── Check for active Dream Cycle lock ────────────────────────────────────────
 if [[ -f "$DREAM_LOCK" ]]; then
-  lock_age=$(( $(date +%s) - $(stat -f %m "$DREAM_LOCK" 2>/dev/null || echo 0) ))
-  if [[ "$lock_age" -lt "$DREAM_LOCK_MAX_AGE" ]]; then
-    log "ERROR: Dream Cycle lock active (age: ${lock_age}s). Aborting preflight archive to prevent race condition."
+  if lock_is_expired "$DREAM_LOCK"; then
+    log "WARN: Stale lock detected (expiry passed). Removing and proceeding."
+    rm -f "$DREAM_LOCK"
+  else
+    expires=$(cut -d: -f3 "$DREAM_LOCK" 2>/dev/null || echo "?")
+    log "ERROR: Dream Cycle lock active (expires: ${expires}). Aborting preflight archive to prevent race condition."
     log "=== Preflight archive END (aborted — DC lock active) ==="
     exit 1
-  else
-    log "WARN: Stale lock detected (age: ${lock_age}s). Removing and proceeding."
-    rm -f "$DREAM_LOCK"
   fi
 fi
 
 # ── Acquire lock for this archive pass (blocks Observer during writes) ────────
-echo "preflight-archive:$$:$(date '+%Y-%m-%dT%H:%M:%SZ')" > "$DREAM_LOCK"
-log "Lock acquired: $DREAM_LOCK"
+created=$(date +%s)
+expires=$(( created + DREAM_LOCK_MAX_AGE ))
+echo "preflight-archive:$$:${created}:${expires}" > "$DREAM_LOCK"
+log "Lock acquired: $DREAM_LOCK (expires ${expires})"
 trap 'rm -f "$DREAM_LOCK"; log "Lock released."' EXIT
 
 # ── Check file exists ────────────────────────────────────────────────────────

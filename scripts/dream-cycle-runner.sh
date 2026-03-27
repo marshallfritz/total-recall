@@ -229,10 +229,40 @@ poll_for_completion() {
   return 1
 }
 
+# ── Stale lock auto-clear ─────────────────────────────────────────────────────
+# The dream-cycle cron job is killed externally by the gateway on timeout (SIGTERM
+# to the isolated session), which bypasses bash trap EXIT handlers. This leaves a
+# stale lock file that blocks subsequent runs. Clear it here before anything else.
+
+DREAM_LOCK="$OPENCLAW_WORKSPACE/logs/dream-cycle.lock"
+DREAM_LOCK_MAX_AGE=1500  # must match dream-cycle.sh
+
+clear_stale_lock() {
+  [ -f "$DREAM_LOCK" ] || return 0
+  local expires
+  expires=$(cut -d: -f3 "$DREAM_LOCK" 2>/dev/null)
+  if [[ "$expires" =~ ^[0-9]+$ ]]; then
+    if [ "$(date +%s)" -gt "$expires" ]; then
+      log WARN "Stale lock cleared (expiry ${expires} passed): $DREAM_LOCK"
+      rm -f "$DREAM_LOCK"
+    fi
+  else
+    # Legacy mtime fallback
+    local lock_age=$(( $(date +%s) - $(stat -f %m "$DREAM_LOCK" 2>/dev/null || echo 0) ))
+    if [ "$lock_age" -gt "$DREAM_LOCK_MAX_AGE" ]; then
+      log WARN "Stale lock cleared (mtime age ${lock_age}s > ${DREAM_LOCK_MAX_AGE}s): $DREAM_LOCK"
+      rm -f "$DREAM_LOCK"
+    fi
+  fi
+}
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 main() {
   write_run_header
+
+  stage "Stale lock check"
+  clear_stale_lock
 
   stage "Pre-flight checks"
   preflight_size_check
