@@ -13,6 +13,18 @@ metadata:
     config:
       memorySearch:
         description: "Enable memory search on observations.md for cross-session recall"
+
+## Slash Command Default Behavior
+
+When invoked as `/total_recall` with no arguments (e.g. tapped from Telegram's slash command menu), run a **status check** automatically without asking for clarification. The status check should report:
+
+- `observations.md` — current size (KB) and word count
+- Observer — last run time and model in use
+- Reflector — last run time, word threshold, and whether it is healthy
+- Dream Cycle — last run time, consecutive error count, and cron job status
+- Any actionable issues (stale lock file, error count > 0, observations.md approaching size ceiling, etc.)
+
+No arguments = status check. Only ask for clarification if an explicit but unrecognized argument is provided.
 ---
 
 # Total Recall — Autonomous Agent Memory
