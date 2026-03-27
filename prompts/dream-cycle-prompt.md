@@ -28,7 +28,14 @@ You must use `$SKILL_DIR/scripts/dream-cycle.sh` (where `SKILL_DIR` is the total
 
 ## Required Sequence
 
+> **Observability:** Call `dream-cycle.sh log-stage <name> [detail]` at the start of each stage below.
+> This writes a timestamped line to `logs/dream-cycle-run.log` — the tailable live log.
+> Always call it **before** the main work of each stage, so a watcher can see progress in real time.
+
 ### 1) Preflight
+```
+bash $SKILL_DIR/scripts/dream-cycle.sh log-stage "1-preflight" "starting"
+```
 - If read-only:
   - `bash $SKILL_DIR/scripts/dream-cycle.sh preflight --dry-run`
 - Otherwise:
@@ -37,6 +44,9 @@ You must use `$SKILL_DIR/scripts/dream-cycle.sh` (where `SKILL_DIR` is the total
 Abort on preflight failure.
 
 ### 2) Read Inputs
+```
+bash $SKILL_DIR/scripts/dream-cycle.sh log-stage "2-read-inputs" "loading observations.md and daily files"
+```
 Read all required context files:
 1. `memory/observations.md`
 2. `memory/favorites.md`
@@ -46,6 +56,9 @@ Optional context:
 - Yesterday’s daily file for tie-break context.
 
 ### 3) Classify Observations
+```
+bash $SKILL_DIR/scripts/dream-cycle.sh log-stage "3-classify" "scoring observations for archival"
+```
 
 > **WP2 note:** If `DREAM_PHASE >= 2`, run `dream-cycle.sh decay` **before** classification to apply daily importance decay to existing scores in `observations.md`.
 
@@ -221,6 +234,9 @@ When `DREAM_PHASE >= 2`, scan for recurring themes across the last 7 days of dre
 - Any patterns that were detected but did not meet the threshold (with reason)
 
 ### 4) Future-Date Protection (Hard Rule)
+```
+bash $SKILL_DIR/scripts/dream-cycle.sh log-stage "4-future-date-check" "protecting future-dated items"
+```
 If an item includes a **future date** (reminder, deadline, scheduled event), it is **never archived**, regardless of impact/age.
 Only consider archiving it after that date passes.
 
@@ -273,12 +289,18 @@ When `DREAM_PHASE >= 2`, scan for clusters of 3+ observations about the same top
 - Conflicting observations where the contradiction is not yet resolved
 
 ### 5) Decide Archive Set
+```
+bash $SKILL_DIR/scripts/dream-cycle.sh log-stage "5-archive-decision" "finalising archive set"
+```
 Only archive items that pass thresholds and are not protected.
 Generate IDs in format:
 - `OBS-YYYYMMDD-NNN`
 - NNN is sequential for the archive date.
 
 ### 6) Build Archive Payload
+```
+bash $SKILL_DIR/scripts/dream-cycle.sh log-stage "6-build-archive" "writing archive file"
+```
 Prepare JSON array for archived entries with fields:
 - `id`
 - `original_date`
@@ -304,6 +326,9 @@ Archived by Dream Cycle nightly run.
 ```
 
 ### 7) Create Semantic Hooks
+```
+bash $SKILL_DIR/scripts/dream-cycle.sh log-stage "7-hooks" "generating semantic hooks"
+```
 For each archived item produce hook format:
 
 ```markdown
@@ -368,6 +393,9 @@ When `DREAM_PHASE >= 2`, generate **4-5 alternative search hooks** for each arch
 - Action → State: "updated config" → "config changed", "killed cron" → "cron disabled"
 
 ### 8) Apply Writes by Mode
+```
+bash $SKILL_DIR/scripts/dream-cycle.sh log-stage "8-write" "applying updates to observations.md"
+```
 
 #### If `READ_ONLY_MODE=true`
 - Do **not** call:
@@ -390,6 +418,9 @@ When `DREAM_PHASE >= 2`, generate **4-5 alternative search hooks** for each arch
    - `dream-cycle.sh write-metrics research/dream-cycle-metrics/daily/YYYY-MM-DD.json`
 
 ### 9) Validate and Fail Safe
+```
+bash $SKILL_DIR/scripts/dream-cycle.sh log-stage "9-validate" "running validation"
+```
 Run:
 - `dream-cycle.sh validate`
 
@@ -446,6 +477,10 @@ Write metrics JSON exactly with fields:
 ---
 
 ## Suggested Execution Summary Output
+Before reporting, emit a final stage log:
+```
+bash $SKILL_DIR/scripts/dream-cycle.sh log-stage "complete" "Dream Cycle finished — <archived>/<total> archived, <reduction_pct>% reduction"
+```
 At the end, report:
 - mode (read-only vs write)
 - analyzed count

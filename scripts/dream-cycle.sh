@@ -736,6 +736,25 @@ cmd_validate() {
   fi
 }
 
+cmd_log_stage() {
+  local stage="${1:-unknown}"
+  local message="${2:-}"
+
+  local log_file="$OPENCLAW_WORKSPACE/logs/dream-cycle-run.log"
+  mkdir -p "$(dirname "$log_file")"
+
+  local ts
+  ts="$(date '+%Y-%m-%d %H:%M:%S')"
+
+  if [ -n "$message" ]; then
+    printf '[%s] [STAGE] %s — %s\n' "$ts" "$stage" "$message" >> "$log_file"
+  else
+    printf '[%s] [STAGE] %s\n' "$ts" "$stage" >> "$log_file"
+  fi
+
+  info "{\"status\":\"ok\",\"command\":\"log-stage\",\"stage\":\"$stage\"}"
+}
+
 cmd_rollback() {
   set +e
   git -C "$OPENCLAW_WORKSPACE" reset --hard HEAD~1
@@ -766,6 +785,7 @@ Usage:
   dream-cycle.sh write-log <log-file> <json-data?>
   dream-cycle.sh write-metrics <json-file> <json-data?>
   dream-cycle.sh write-staging <staging-file> <json-data?>
+  dream-cycle.sh log-stage <stage-name> [message]
   dream-cycle.sh validate
   dream-cycle.sh rollback
 
@@ -824,6 +844,10 @@ main() {
     validate)
       shift
       cmd_validate "$@"
+      ;;
+    log-stage)
+      shift
+      cmd_log_stage "$@"
       ;;
     rollback)
       shift
