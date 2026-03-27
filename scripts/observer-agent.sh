@@ -30,6 +30,8 @@ OBSERVER_LOG="$WORKSPACE/logs/observer.log"
 MARKER_FILE="$MEMORY_DIR/.observer-last-run"
 HASH_FILE="$MEMORY_DIR/.observer-last-hash"
 LOCK_FILE="$WORKSPACE/logs/reflector.lock"
+DREAM_LOCK_FILE="$WORKSPACE/logs/dream-cycle.lock"
+DREAM_LOCK_MAX_AGE=1500  # 25 min — matches dream-cycle.sh ceiling
 
 # Source env if available (grep-guard: only export KEY=VALUE lines)
 if [ -f "$WORKSPACE/.env" ]; then
@@ -58,6 +60,19 @@ if [ ! -f "$OBSERVER_PROMPT" ]; then
   log "ERROR: Observer prompt not found at $OBSERVER_PROMPT"
   echo "ERROR_NO_PROMPT"
   exit 1
+fi
+
+# --- Dream Cycle lock check (suspend Observer while Dream Cycle is running) ---
+if [ -f "$DREAM_LOCK_FILE" ]; then
+  DREAM_LOCK_AGE=$(( $(date +%s) - $(file_mtime "$DREAM_LOCK_FILE") ))
+  if [ "$DREAM_LOCK_AGE" -lt "$DREAM_LOCK_MAX_AGE" ]; then
+    log "Dream Cycle lock active (${DREAM_LOCK_AGE}s old) — suspending Observer until run completes"
+    echo "SKIPPED_DREAM_CYCLE_RUNNING"
+    exit 0
+  else
+    log "Stale Dream Cycle lock (${DREAM_LOCK_AGE}s old, max ${DREAM_LOCK_MAX_AGE}s) — removing and proceeding"
+    rm -f "$DREAM_LOCK_FILE"
+  fi
 fi
 
 # --- Lock check (prevent collision with reflector OR another observer) ---

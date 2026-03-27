@@ -91,6 +91,9 @@ git_snapshot() {
   git -C "$OPENCLAW_WORKSPACE" commit -m "$msg" || true
 }
 
+DREAM_LOCK_FILE="$OPENCLAW_WORKSPACE/logs/dream-cycle.lock"
+DREAM_LOCK_MAX_AGE=1500  # 25 min — safely above the 1200s cron timeout
+
 cmd_preflight() {
   local dry_run="false"
   if [ "${1:-}" = "--dry-run" ]; then
@@ -100,6 +103,12 @@ cmd_preflight() {
   require_file "$OBSERVATIONS_FILE"
   [ -f "$FAVORITES_FILE" ] || { mkdir -p "$MEMORY_DIR"; printf "# Favorites\n\n(No favorites recorded yet.)\n" > "$FAVORITES_FILE"; }
   ensure_dirs
+
+  # Write dream-cycle lock so Observer skips during this run
+  if [ "$dry_run" = "false" ]; then
+    echo "$$:$(ISO_STAMP_UTC)" > "$DREAM_LOCK_FILE"
+    info "Dream-cycle lock written: $DREAM_LOCK_FILE"
+  fi
 
   local backup_file="$BACKUP_DIR/observations.pre-dream.md"
   cp "$OBSERVATIONS_FILE" "$backup_file"
@@ -729,6 +738,9 @@ cmd_validate() {
 
   local total_false_archives=$(( critical_hits + high_importance_hits ))
 
+  # Release dream-cycle lock on clean validation
+  rm -f "$DREAM_LOCK_FILE"
+
   info "{\"status\":\"ok\",\"command\":\"validate\",\"validation_passed\":$passed,\"tokens\":$tokens,\"token_target\":$TOKEN_TARGET,\"git_status_lines\":$git_state,\"critical_false_archives\":$total_false_archives,\"notes\":\"$notes\"}"
 
   if [ "$passed" != true ]; then
@@ -770,6 +782,9 @@ cmd_rollback() {
   if [ -f "$backup_file" ]; then
     cp "$backup_file" "$OBSERVATIONS_FILE"
   fi
+
+  # Release dream-cycle lock on rollback (failed run)
+  rm -f "$DREAM_LOCK_FILE"
 
   info "{\"status\":\"ok\",\"command\":\"rollback\"}"
 }

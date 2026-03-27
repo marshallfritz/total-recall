@@ -18,6 +18,8 @@ SESSIONS_DIR="${SESSIONS_DIR:-$HOME/.openclaw/agents/main/sessions}"
 SESSIONS_INDEX="$SESSIONS_DIR/sessions.json"
 MARKER_FILE="/tmp/observer-watcher-macos-lastrun"
 COOLDOWN_SECS="${OBSERVER_COOLDOWN_SECS:-300}"
+DREAM_LOCK_FILE="$WORKSPACE/logs/dream-cycle.lock"
+DREAM_LOCK_MAX_AGE=1500
 LINE_THRESHOLD="${OBSERVER_LINE_THRESHOLD:-40}"
 LOG="$WORKSPACE/logs/observer-watcher.log"
 PIDFILE="/tmp/total-recall-watcher-macos-$(id -u).pid"
@@ -87,7 +89,23 @@ in_cooldown() {
   [ "$elapsed" -lt "$COOLDOWN_SECS" ]
 }
 
+dream_cycle_running() {
+  [ -f "$DREAM_LOCK_FILE" ] || return 1
+  local age=$(( $(date +%s) - $(file_mtime "$DREAM_LOCK_FILE") ))
+  if [ "$age" -lt "$DREAM_LOCK_MAX_AGE" ]; then
+    return 0  # lock is fresh — dream cycle running
+  fi
+  # Stale lock — remove it and return false
+  log "Stale Dream Cycle lock (${age}s), removing"
+  rm -f "$DREAM_LOCK_FILE"
+  return 1
+}
+
 trigger_observer() {
+  if dream_cycle_running; then
+    log "Dream Cycle lock active — suppressing reactive observer trigger (lines: $ACCUMULATED_LINES)"
+    return
+  fi
   if in_cooldown; then
     log "Cooldown active (${COOLDOWN_SECS}s). Skipping. Lines: $ACCUMULATED_LINES"
     return
