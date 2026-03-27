@@ -200,11 +200,13 @@ The following item types are **unconditionally excluded** regardless of importan
 
 **Session navigation / acknowledgment:**
 - "User directed to proceed" / "User instructed to proceed"
+- "User directed to [any verb]" / "User instructed to [any verb]" — any instruction to perform a single action without a new decision or outcome
 - "User confirmed" / "user said yes" / "user agreed" / "user approved"
 - "User requested confirmation" / "User asked for confirmation"
 - "User inquired about X" — question with no new actionable resolution
 - "Assistant will X" / "Assistant is preparing to X" / "Assistant began X" — intent statements, not outcomes
 - "Assistant agreed to X" / "Assistant confirmed X"
+- "Assistant is implementing changes to X" — intent statement; record the outcome (what was committed), not the intent
 - Any item whose sole content is that a user or assistant acknowledged/agreed/proceeded without a new decision or outcome
 
 **Process sub-steps (HOW, not WHAT):**
@@ -213,6 +215,10 @@ The following item types are **unconditionally excluded** regardless of importan
 - "Assistant is verifying X before Y"
 - "User directed assistant to check X and report back"
 - Items describing that an action is *about to happen* or *is in progress* — record the outcome, not the intent
+
+**Routine commits (no D#/milestone anchor):**
+- "Assistant committed and pushed [description]" — EXCLUDED unless the same sentence explicitly names a D# number (e.g. D156), OC-# entry, gate session ID (e.g. gmd2-a-session-003), or milestone name (e.g. G-MD-2, Milestone D). Without that anchor, a commit mention is a process breadcrumb.
+- The 7.5 CGP floor for "repo commits that close a D# or advance a milestone" ONLY applies when the D#/milestone is explicitly present in the same observation. A commit description alone does not qualify.
 
 **Observable outputs of cron / background jobs (unless they contain errors or novel state):**
 - "Observer started in the background with session ID X" — pure operational noise
