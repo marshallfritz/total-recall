@@ -92,7 +92,9 @@ git_snapshot() {
 }
 
 DREAM_LOCK_FILE="$OPENCLAW_WORKSPACE/logs/dream-cycle.lock"
-DREAM_LOCK_MAX_AGE=1500  # 25 min — safely above the 1200s cron timeout
+# shellcheck source=config.sh
+source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
+DREAM_LOCK_MAX_AGE=$TR_LOCK_MAX_AGE
 
 # Read expiry epoch from a self-describing lock file (format: PID:CREATED:EXPIRES)
 # Falls back to mtime-based check for legacy lock files.

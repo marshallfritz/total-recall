@@ -18,7 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DREAM_CYCLE="$SCRIPT_DIR/dream-cycle.sh"
 TODAY="$(date +%Y-%m-%d)"
 NOW="$(date '+%Y-%m-%dT%H:%M:%S')"
-SIZE_CEILING_BYTES=40960  # 40KB
+# SIZE_CEILING_BYTES now sourced from config.sh via TR_OBS_CEILING_BYTES
 
 mkdir -p "$ARCHIVE_DIR" "$BACKUP_DIR" "$(dirname "$LOG_FILE")"
 
@@ -30,7 +30,10 @@ log "=== Preflight archive START ==="
 
 # ── Lock helpers (self-describing format: PID:CREATED:EXPIRES) ───────────────
 DREAM_LOCK="$WORKSPACE/logs/dream-cycle.lock"
-DREAM_LOCK_MAX_AGE=1500  # 25 min — matches dream-cycle.sh ceiling
+# shellcheck source=config.sh
+source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
+DREAM_LOCK_MAX_AGE=$TR_LOCK_MAX_AGE
+SIZE_CEILING_BYTES=$TR_OBS_CEILING_BYTES
 
 lock_is_expired() {
   local lock_file="$1"

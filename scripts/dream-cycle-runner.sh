@@ -121,10 +121,10 @@ preflight_size_check() {
 
   log INFO "observations.md — ${bytes} bytes / ${words} words"
 
-  if [ "$bytes" -gt 40960 ]; then
-    log WARN "❌ observations.md OVER ceiling (${bytes}B > 40960B) — Dream Cycle may time out"
+  if [ "$bytes" -gt "$TR_OBS_CEILING_BYTES" ]; then
+    log WARN "❌ observations.md OVER ceiling (${bytes}B > ${TR_OBS_CEILING_BYTES}B) — Dream Cycle may time out"
     log WARN "   Run preflight-archive.sh first, or manual archive pass required"
-  elif [ "$bytes" -gt 34000 ]; then
+  elif [ "$bytes" -gt "$TR_OBS_SAFE_BYTES" ]; then
     log WARN "⚠️  observations.md approaching ceiling (${bytes}B)"
   else
     log INFO "✅ observations.md within ceiling"
@@ -235,7 +235,9 @@ poll_for_completion() {
 # stale lock file that blocks subsequent runs. Clear it here before anything else.
 
 DREAM_LOCK="$OPENCLAW_WORKSPACE/logs/dream-cycle.lock"
-DREAM_LOCK_MAX_AGE=1500  # must match dream-cycle.sh
+# shellcheck source=config.sh
+source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
+DREAM_LOCK_MAX_AGE=$TR_LOCK_MAX_AGE
 
 clear_stale_lock() {
   [ -f "$DREAM_LOCK" ] || return 0

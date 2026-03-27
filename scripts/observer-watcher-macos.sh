@@ -19,7 +19,9 @@ SESSIONS_INDEX="$SESSIONS_DIR/sessions.json"
 MARKER_FILE="/tmp/observer-watcher-macos-lastrun"
 COOLDOWN_SECS="${OBSERVER_COOLDOWN_SECS:-300}"
 DREAM_LOCK_FILE="$WORKSPACE/logs/dream-cycle.lock"
-DREAM_LOCK_MAX_AGE=1500
+# shellcheck source=config.sh
+source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
+DREAM_LOCK_MAX_AGE=$TR_LOCK_MAX_AGE
 
 # Read expiry from self-describing lock file (format: PID:CREATED:EXPIRES)
 # Falls back to mtime-based check for legacy lock files.

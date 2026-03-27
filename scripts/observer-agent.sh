@@ -31,7 +31,9 @@ MARKER_FILE="$MEMORY_DIR/.observer-last-run"
 HASH_FILE="$MEMORY_DIR/.observer-last-hash"
 LOCK_FILE="$WORKSPACE/logs/reflector.lock"
 DREAM_LOCK_FILE="$WORKSPACE/logs/dream-cycle.lock"
-DREAM_LOCK_MAX_AGE=1500  # 25 min — matches dream-cycle.sh ceiling
+# shellcheck source=config.sh
+source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
+DREAM_LOCK_MAX_AGE=$TR_LOCK_MAX_AGE
 
 # Read expiry from self-describing lock file (format: PID:CREATED:EXPIRES)
 # Falls back to mtime-based check for legacy lock files.
