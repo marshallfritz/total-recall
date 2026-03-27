@@ -27,7 +27,7 @@ A theme qualifies as a pattern ONLY if it appears in observations from **3 or mo
 
 **What does NOT qualify:**
 - One-off events or individual incidents
-- Things already in AGENTS.md, MEMORY.md, TOOLS.md, SOUL.md, IDENTITY.md, or favorites.md
+- Things already in AGENTS.md, MEMORY.md, TOOLS.md, SOUL.md, IDENTITY.md, favorites.md, or `memory/constants.md`
 - Patterns where source observations have `dc:importance < 5.0`
 - Fewer than 3 separate calendar days of evidence
 
