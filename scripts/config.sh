@@ -45,6 +45,18 @@ TR_IMPORTANCE_FLOOR=6.5
 # Phase 2 trigger: minimum calendar day spread in observations to warrant pattern scan
 TR_PHASE2_MIN_AGE_SPREAD_DAYS=7
 
+# ── Event-driven DC trigger settings ─────────────────────────────────────────
+
+# Size threshold at which watcher triggers Dream Cycle (proactive, below ceiling)
+TR_OBS_TRIGGER_BYTES=30720           # 30KB
+
+# Cooldown between watcher-triggered DC runs (prevents re-trigger every Observer fire)
+TR_DC_TRIGGER_COOLDOWN_SECS=1800     # 30 min
+
+# Cooldown file: TRIGGERED_EPOCH:COOLDOWN_ENDS_EPOCH
+# Check: $(date +%s) > COOLDOWN_ENDS_EPOCH → cooldown lifted
+TR_DC_COOLDOWN_FILE="logs/dream-cycle-cooldown.txt"
+
 # ── Cron job IDs (for manual trigger reference) ───────────────────────────────
 
 TR_DREAM_CYCLE_JOB_ID="a50a6e7b-0446-4274-9344-a9cfaba62a3b"

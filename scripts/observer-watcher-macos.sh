@@ -121,6 +121,60 @@ dream_cycle_running() {
   return 1
 }
 
+dc_cooldown_active() {
+  local cooldown_file="$WORKSPACE/$TR_DC_COOLDOWN_FILE"
+  [ -f "$cooldown_file" ] || return 1
+  local ends
+  ends=$(cut -d: -f2 "$cooldown_file" 2>/dev/null)
+  if [[ "$ends" =~ ^[0-9]+$ ]]; then
+    [ "$(date +%s)" -lt "$ends" ]
+  else
+    return 1  # unparseable — treat as not active
+  fi
+}
+
+write_dc_cooldown() {
+  local now ends
+  now=$(date +%s)
+  ends=$(( now + TR_DC_TRIGGER_COOLDOWN_SECS ))
+  echo "${now}:${ends}" > "$WORKSPACE/$TR_DC_COOLDOWN_FILE"
+  log "DC cooldown set: lifts at epoch ${ends} ($(date -r "$ends" '+%H:%M:%S' 2>/dev/null || echo ${ends}))"
+}
+
+maybe_trigger_dream_cycle() {
+  local obs="$WORKSPACE/memory/observations.md"
+  [ -f "$obs" ] || return
+
+  local bytes
+  bytes=$(wc -c < "$obs" | tr -d ' ')
+  if [ "$bytes" -lt "$TR_OBS_TRIGGER_BYTES" ]; then
+    return  # file healthy, no trigger needed
+  fi
+
+  if dream_cycle_running; then
+    log "DC size trigger suppressed — Dream Cycle already running (${bytes}B > ${TR_OBS_TRIGGER_BYTES}B)"
+    return
+  fi
+
+  if dc_cooldown_active; then
+    local ends
+    ends=$(cut -d: -f2 "$WORKSPACE/$TR_DC_COOLDOWN_FILE" 2>/dev/null || echo "?")
+    log "DC size trigger suppressed — cooldown active until epoch ${ends} (${bytes}B > ${TR_OBS_TRIGGER_BYTES}B)"
+    return
+  fi
+
+  log "DC size trigger FIRED: observations.md ${bytes}B > ${TR_OBS_TRIGGER_BYTES}B — triggering Dream Cycle"
+  write_dc_cooldown
+
+  # Use openclaw CLI to trigger the cron job
+  if command -v openclaw &>/dev/null; then
+    openclaw cron run "$TR_DREAM_CYCLE_JOB_ID" >> "$LOG" 2>&1 &
+    log "Dream Cycle cron enqueued (job: $TR_DREAM_CYCLE_JOB_ID)"
+  else
+    log "WARNING: openclaw CLI not found — cannot trigger Dream Cycle automatically"
+  fi
+}
+
 trigger_observer() {
   if dream_cycle_running; then
     log "Dream Cycle lock active — suppressing reactive observer trigger (lines: $ACCUMULATED_LINES)"
@@ -135,6 +189,9 @@ trigger_observer() {
   ACCUMULATED_LINES=0
   OPENCLAW_WORKSPACE="$WORKSPACE" "$SKILL_DIR/scripts/observer-agent.sh" >> "$LOG" 2>&1 &
   log "Observer started (PID $!)"
+
+  # After firing Observer, check if observations.md warrants a Dream Cycle trigger
+  maybe_trigger_dream_cycle
 }
 
 check_cron_ran() {
