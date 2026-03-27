@@ -36,6 +36,10 @@ The `dc:date` is the date the observation REFERS TO (which may differ from today
 ### Scoring guide:
 - **CRITICAL: Score HONESTLY.** The Write/Don't Write Gate handles filtering — do not use low scores as a substitute for the gate. Items that pass the gate should be scored on their actual signal value (typically 6.5–9.0). If in doubt about whether to write something, apply the gate — not a low score.
 - Automated/cron/scheduled actions (briefings sent, scripts executed, tokens refreshed, auto-updates, preflight checks) are ALWAYS 1-2. No exceptions. These are operational noise.
+
+**Score CEILINGS — these override CGP floors and cannot be raised:**
+- **Transient session state facts** — score ≤ 6.5 (archive-eligible): "cre HEAD at commit X", "all artifacts committed at `hash`", "session started with model Y", "hai-os is clean", "working tree dirty". These are intermediate navigation breadcrumbs. The substantive parent event (the D# decision, the milestone close, the fusion commit) carries the real signal — do not double-count by also writing the commit confirmation.
+- **Conversational Q&A clarifications** (context type) — score ≤ 6.0: one-time informational exchanges where someone asked a question and got an answer, with no ongoing decision or action. Examples: "User asked what ACP is", "User asked if Brave Search costs money", "User asked how to switch models". No durable value once the conversation moves on.
 - User decisions score higher than routine assistant actions (searching, formatting)
 - Assistant actions with external consequences (publishing, sending, deploying, deleting) score as equivalent to user decisions
 - Financial info scores 7+
@@ -189,6 +193,41 @@ Each one found MUST produce at least one observation — do not skip or summariz
 - 🔴 HH:MM ;oc milestone close: [Milestone X / Session S#] — fork capsule and PRB committed at [hash] <!-- dc:type=goal dc:importance=8.5 dc:date=YYYY-MM-DD -->
 - 🔴 HH:MM D143 decision: "[decision text]" — [committed/proposed/pending] <!-- dc:type=rule dc:importance=8.5 dc:date=YYYY-MM-DD -->
 ```
+
+## Absolute Never-Write Override (runs BEFORE the gate — no exceptions, no CGP floor overrides)
+
+The following item types are **unconditionally excluded** regardless of importance score, CGP floors, or snippet detection. If an item matches any pattern below, do NOT write it even if it would otherwise score 9.0:
+
+**Session navigation / acknowledgment:**
+- "User directed to proceed" / "User instructed to proceed"
+- "User confirmed" / "user said yes" / "user agreed" / "user approved"
+- "User requested confirmation" / "User asked for confirmation"
+- "User inquired about X" — question with no new actionable resolution
+- "Assistant will X" / "Assistant is preparing to X" / "Assistant began X" — intent statements, not outcomes
+- "Assistant agreed to X" / "Assistant confirmed X"
+- Any item whose sole content is that a user or assistant acknowledged/agreed/proceeded without a new decision or outcome
+
+**Process sub-steps (HOW, not WHAT):**
+- "Executing steps 1–N" / "Proceeding with step N"
+- "Assistant read file X to calibrate format"
+- "Assistant is verifying X before Y"
+- "User directed assistant to check X and report back"
+- Items describing that an action is *about to happen* or *is in progress* — record the outcome, not the intent
+
+**Observable outputs of cron / background jobs (unless they contain errors or novel state):**
+- "Observer started in the background with session ID X" — pure operational noise
+- "Reflector is currently running"
+- "Total Recall observer ran at X:XX, reporting no new observations"
+- "No new sessions were observed, nothing logged"
+- Any observer/reflector execution with status "clean", "nothing to process", or "no output" — these are NO_OBSERVATIONS scenarios
+
+**Examples of items that SOUND important but are NOT:**
+- "User activated CGP and requested X" — record what was decided, not that CGP was activated
+- "User requested a review of X" — record the outcome of the review, not the request
+- "User initiated a ;sr / ;ol / ;ws" — the snippet itself is recorded; the meta-event of initiating it is noise
+- "Assistant is awaiting a ;ws signal" — pure session state, zero durable value
+
+**The test:** Would this item tell a future session something it needs to act on, or is it just narrating that a conversation happened? If it's just narration, don't write it.
 
 ## Write/Don't Write Gate (MANDATORY — run before writing any observation)
 

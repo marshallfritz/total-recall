@@ -322,6 +322,16 @@ Hook quality (CRITICAL — Night 1 lesson):
 - valid archive reference path
 - concise but specific text
 
+#### 7z) Hook Section Cap (ALWAYS RUN — Phase 1 and Phase 2)
+After generating new hooks, enforce a maximum of **20 hooks** in the `## Semantic Hooks (Archived Items)` section of observations.md:
+
+1. Count all hooks currently in the section (existing + new ones just created for this run)
+2. If total > 20: remove the **oldest** hooks first — those with the earliest archive reference dates (lowest YYYY-MM-DD in their `[ref: ...]` paths) — until count ≤ 20
+3. Removed hooks are safe to drop — their full content lives in the archive files they reference; the hook is just a pointer
+4. When building the new observations.md via `update-observations`, ensure the hooks section contains ≤ 20 entries total
+
+**Rationale:** Each Dream Cycle run appends new hooks without removing old ones. Without a cap, the hooks section accumulates unboundedly and becomes the dominant source of file bloat. At 20 hooks × ~350 bytes each, the section stays ≤ 7KB.
+
 #### 7a) Multi-Hook Generation — DREAM_PHASE >= 2 only
 > **Skip this subsection if `DREAM_PHASE < 2` or `DREAM_PHASE` is not set.**
 

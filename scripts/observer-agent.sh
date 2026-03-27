@@ -244,7 +244,7 @@ for ATTEMPT in 1 2; do
   ATTEMPT_PAYLOAD=$(echo "$PAYLOAD" | jq --arg m "$MODEL" '.model = $m')
   
   log "DEBUG: Making LLM call with model: $MODEL, attempt: $ATTEMPT"
-  RESPONSE=$(curl -s --max-time 60 "$LLM_BASE_URL/chat/completions" \
+  RESPONSE=$(curl -s --max-time 120 "$LLM_BASE_URL/chat/completions" \
     -H "Authorization: Bearer $LLM_API_KEY" \
     -H "Content-Type: application/json" \
     -d "$ATTEMPT_PAYLOAD")
