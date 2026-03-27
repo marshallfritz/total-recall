@@ -104,6 +104,19 @@ cmd_preflight() {
   [ -f "$FAVORITES_FILE" ] || { mkdir -p "$MEMORY_DIR"; printf "# Favorites\n\n(No favorites recorded yet.)\n" > "$FAVORITES_FILE"; }
   ensure_dirs
 
+  # Abort if a Dream Cycle is already running (stale lock guard also handled in hc-runbook)
+  if [ "$dry_run" = "false" ] && [ -f "$DREAM_LOCK_FILE" ]; then
+    local lock_age=$(( $(date +%s) - $(stat -f %m "$DREAM_LOCK_FILE" 2>/dev/null || echo 0) ))
+    if [ "$lock_age" -lt "$DREAM_LOCK_MAX_AGE" ]; then
+      info "{\"status\":\"error\",\"command\":\"preflight\",\"reason\":\"lock_exists\",\"lock_file\":\"$DREAM_LOCK_FILE\",\"lock_age_seconds\":$lock_age}"
+      error "Dream Cycle already running (lock age: ${lock_age}s). Aborting to prevent race condition."
+      exit 1
+    else
+      warn "Stale lock detected (age: ${lock_age}s > ${DREAM_LOCK_MAX_AGE}s). Removing and proceeding."
+      rm -f "$DREAM_LOCK_FILE"
+    fi
+  fi
+
   # Write dream-cycle lock so Observer skips during this run
   if [ "$dry_run" = "false" ]; then
     echo "$$:$(ISO_STAMP_UTC)" > "$DREAM_LOCK_FILE"

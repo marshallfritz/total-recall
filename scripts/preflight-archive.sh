@@ -28,6 +28,21 @@ log() {
 
 log "=== Preflight archive START ==="
 
+# ── Check for active Dream Cycle lock ────────────────────────────────────────
+DREAM_LOCK="$WORKSPACE/logs/dream-cycle.lock"
+DREAM_LOCK_MAX_AGE=1500  # 25 min — matches dream-cycle.sh ceiling
+if [[ -f "$DREAM_LOCK" ]]; then
+  lock_age=$(( $(date +%s) - $(stat -f %m "$DREAM_LOCK" 2>/dev/null || echo 0) ))
+  if [[ "$lock_age" -lt "$DREAM_LOCK_MAX_AGE" ]]; then
+    log "ERROR: Dream Cycle lock active (age: ${lock_age}s). Aborting preflight archive to prevent race condition."
+    log "=== Preflight archive END (aborted — DC lock active) ==="
+    exit 1
+  else
+    log "WARN: Stale lock detected (age: ${lock_age}s). Removing and proceeding."
+    rm -f "$DREAM_LOCK"
+  fi
+fi
+
 # ── Check file exists ────────────────────────────────────────────────────────
 if [[ ! -f "$OBSERVATIONS" ]]; then
   log "observations.md not found at $OBSERVATIONS — nothing to do"
