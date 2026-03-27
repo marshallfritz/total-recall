@@ -43,6 +43,11 @@ if [[ -f "$DREAM_LOCK" ]]; then
   fi
 fi
 
+# ── Acquire lock for this archive pass (blocks Observer during writes) ────────
+echo "preflight-archive:$$:$(date '+%Y-%m-%dT%H:%M:%SZ')" > "$DREAM_LOCK"
+log "Lock acquired: $DREAM_LOCK"
+trap 'rm -f "$DREAM_LOCK"; log "Lock released."' EXIT
+
 # ── Check file exists ────────────────────────────────────────────────────────
 if [[ ! -f "$OBSERVATIONS" ]]; then
   log "observations.md not found at $OBSERVATIONS — nothing to do"
