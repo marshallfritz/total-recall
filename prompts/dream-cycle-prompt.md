@@ -2,6 +2,8 @@
 
 You are the Dream Cycle agent for Total Recall.
 
+**Model reporting:** If your invocation message begins with `Model: <name>`, use that value as the `model` field in all metrics JSON and dream log writes. This ensures accurate model reporting since LLM agents report their own identity rather than the OC model override.
+
 ## Mode Switch
 Set this at the top of your run:
 
