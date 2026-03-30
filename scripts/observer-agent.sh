@@ -376,6 +376,47 @@ else
   echo "$OBSERVATION" >> "$OBSERVATIONS_FILE"
 fi
 
+# --- Pensive A/B shadow (non-blocking) ---
+# Extract scored observation lines and run through Pensive write gate for comparison.
+# TR stays authoritative — this never blocks or modifies the write.
+PENSIVE_SHIM="/Users/tars/Code/pensive/scripts/ab_shadow.py"
+PENSIVE_PYTHON="/Users/tars/Code/pensive/.venv/bin/python3"
+if [ -f "$PENSIVE_SHIM" ] && [ -f "$PENSIVE_PYTHON" ]; then
+  {
+    # Use python3 to extract scored lines (avoids macOS grep -P limitation)
+    echo "$OBSERVATION" | "$PENSIVE_PYTHON" - << 'PYEOF' >> "$WORKSPACE/logs/pensive-ab.log" 2>&1 || true
+import sys, re, json, subprocess, os
+
+shim = "/Users/tars/Code/pensive/scripts/ab_shadow.py"
+python = "/Users/tars/Code/pensive/.venv/bin/python3"
+text = sys.stdin.read()
+
+for line in text.splitlines():
+    imp_m = re.search(r'dc:importance=([0-9.]+)', line)
+    type_m = re.search(r'dc:type=(\w+)', line)
+    if not imp_m:
+        continue
+    importance = float(imp_m.group(1))
+    obs_type = type_m.group(1) if type_m else "unknown"
+    content = re.sub(r'<!--.*?-->', '', line)
+    content = re.sub(r'^[\s\-🔴🟡🟢]+', '', content).strip()
+    if not content:
+        continue
+    payload = json.dumps({"score": importance, "type": obs_type, "content": content})
+    try:
+        result = subprocess.run(
+            [python, shim],
+            input=payload, capture_output=True, text=True, timeout=10
+        )
+        if result.stdout.strip():
+            print(result.stdout.strip(), flush=True)
+    except Exception as e:
+        print(f"ab_shadow error: {e}", flush=True)
+PYEOF
+  } &
+  log "Pensive A/B shadow triggered (background)"
+fi
+
 # Write hash AFTER successful append (blocker #6 fix — prevents data loss)
 echo "$CURRENT_HASH" > "$HASH_FILE"
 date +%s > "$MARKER_FILE"
