@@ -30,14 +30,14 @@ OBSERVER_LOG="$WORKSPACE/logs/observer.log"
 MARKER_FILE="$MEMORY_DIR/.observer-last-run"
 HASH_FILE="$MEMORY_DIR/.observer-last-hash"
 LOCK_FILE="$WORKSPACE/logs/reflector.lock"
-DREAM_LOCK_FILE="$WORKSPACE/logs/sweet-dreams.lock"
+DREAM_LOCK_FILE="$WORKSPACE/logs/dream-cycle.lock"
 # shellcheck source=config.sh
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
 DREAM_LOCK_MAX_AGE=$TR_LOCK_MAX_AGE
 
 # Read expiry from self-describing lock file (format: PID:CREATED:EXPIRES)
 # Falls back to mtime-based check for legacy lock files.
-# NOTE: Keep in sync with sweet-dreams.sh, preflight-archive.sh, observer-watcher-macos.sh
+# NOTE: Keep in sync with dream-cycle.sh, preflight-archive.sh, observer-watcher-macos.sh
 # See: cre/TRStrategyBootstrap.md §Lock Format
 dream_lock_is_active() {
   local lock_file="$1"
@@ -82,15 +82,15 @@ if [ ! -f "$OBSERVER_PROMPT" ]; then
   exit 1
 fi
 
-# --- Sweet Dreams lock check (suspend Observer while Sweet Dreams is running) ---
+# --- Dream Cycle lock check (suspend Observer while Dream Cycle is running) ---
 if [ -f "$DREAM_LOCK_FILE" ]; then
   if dream_lock_is_active "$DREAM_LOCK_FILE"; then
     expires=$(cut -d: -f3 "$DREAM_LOCK_FILE" 2>/dev/null || echo "?")
-    log "Sweet Dreams lock active (expires: ${expires}) — suspending Observer until run completes"
+    log "Dream Cycle lock active (expires: ${expires}) — suspending Observer until run completes"
     echo "SKIPPED_DREAM_CYCLE_RUNNING"
     exit 0
   else
-    log "Stale Sweet Dreams lock (expiry passed) — removing and proceeding"
+    log "Stale Dream Cycle lock (expiry passed) — removing and proceeding"
     rm -f "$DREAM_LOCK_FILE"
   fi
 fi
@@ -382,14 +382,17 @@ fi
 PENSIVE_SHIM="/Users/tars/Code/pensive/scripts/ab_shadow.py"
 PENSIVE_PYTHON="/Users/tars/Code/pensive/.venv/bin/python3"
 if [ -f "$PENSIVE_SHIM" ] && [ -f "$PENSIVE_PYTHON" ]; then
-  {
-    # Use python3 to extract scored lines (avoids macOS grep -P limitation)
-    echo "$OBSERVATION" | "$PENSIVE_PYTHON" - << 'PYEOF' >> "$WORKSPACE/logs/pensive-ab.log" 2>&1 || true
-import sys, re, json, subprocess, os
+  # Write extractor script to temp file (avoids heredoc+pipe+background conflict)
+  PENSIVE_EXTRACTOR=$(mktemp /tmp/pensive-extract-XXXXXX.py)
+  cat > "$PENSIVE_EXTRACTOR" << 'PYEOF'
+import sys, re, json, subprocess
 
 shim = "/Users/tars/Code/pensive/scripts/ab_shadow.py"
 python = "/Users/tars/Code/pensive/.venv/bin/python3"
-text = sys.stdin.read()
+
+obs_file = sys.argv[1]
+with open(obs_file) as f:
+    text = f.read()
 
 for line in text.splitlines():
     imp_m = re.search(r'dc:importance=([0-9.]+)', line)
@@ -399,7 +402,7 @@ for line in text.splitlines():
     importance = float(imp_m.group(1))
     obs_type = type_m.group(1) if type_m else "unknown"
     content = re.sub(r'<!--.*?-->', '', line)
-    content = re.sub(r'^[\s\-🔴🟡🟢]+', '', content).strip()
+    content = re.sub(r'^[\s\-]+', '', content).strip()
     if not content:
         continue
     payload = json.dumps({"score": importance, "type": obs_type, "content": content})
@@ -413,6 +416,12 @@ for line in text.splitlines():
     except Exception as e:
         print(f"ab_shadow error: {e}", flush=True)
 PYEOF
+  # Write observation to temp file, run extractor in background
+  PENSIVE_OBS_TMP=$(mktemp /tmp/pensive-obs-XXXXXX.txt)
+  echo "$OBSERVATION" > "$PENSIVE_OBS_TMP"
+  {
+    "$PENSIVE_PYTHON" "$PENSIVE_EXTRACTOR" "$PENSIVE_OBS_TMP" >> "$WORKSPACE/logs/pensive-ab.log" 2>&1 || true
+    rm -f "$PENSIVE_EXTRACTOR" "$PENSIVE_OBS_TMP"
   } &
   log "Pensive A/B shadow triggered (background)"
 fi
