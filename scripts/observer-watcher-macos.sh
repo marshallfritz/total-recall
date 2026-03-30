@@ -18,14 +18,14 @@ SESSIONS_DIR="${SESSIONS_DIR:-$HOME/.openclaw/agents/main/sessions}"
 SESSIONS_INDEX="$SESSIONS_DIR/sessions.json"
 MARKER_FILE="/tmp/observer-watcher-macos-lastrun"
 COOLDOWN_SECS="${OBSERVER_COOLDOWN_SECS:-300}"
-DREAM_LOCK_FILE="$WORKSPACE/logs/dream-cycle.lock"
+DREAM_LOCK_FILE="$WORKSPACE/logs/sweet-dreams.lock"
 # shellcheck source=config.sh
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
 DREAM_LOCK_MAX_AGE=$TR_LOCK_MAX_AGE
 
 # Read expiry from self-describing lock file (format: PID:CREATED:EXPIRES)
 # Falls back to mtime-based check for legacy lock files.
-# NOTE: Keep in sync with dream-cycle.sh, preflight-archive.sh, observer-agent.sh
+# NOTE: Keep in sync with sweet-dreams.sh, preflight-archive.sh, observer-agent.sh
 # See: cre/TRStrategyBootstrap.md §Lock Format
 dream_lock_is_active() {
   local lock_file="$1"
@@ -111,12 +111,12 @@ in_cooldown() {
 dream_cycle_running() {
   [ -f "$DREAM_LOCK_FILE" ] || return 1
   if dream_lock_is_active "$DREAM_LOCK_FILE"; then
-    return 0  # lock is fresh — dream cycle running
+    return 0  # lock is fresh — sweet dreams running
   fi
   # Stale lock — remove it and return false
   local expires
   expires=$(cut -d: -f3 "$DREAM_LOCK_FILE" 2>/dev/null || echo "?")
-  log "Stale Dream Cycle lock (expires: ${expires}), removing"
+  log "Stale Sweet Dreams lock (expires: ${expires}), removing"
   rm -f "$DREAM_LOCK_FILE"
   return 1
 }
@@ -152,7 +152,7 @@ maybe_trigger_dream_cycle() {
   fi
 
   if dream_cycle_running; then
-    log "DC size trigger suppressed — Dream Cycle already running (${bytes}B > ${TR_OBS_TRIGGER_BYTES}B)"
+    log "DC size trigger suppressed — Sweet Dreams already running (${bytes}B > ${TR_OBS_TRIGGER_BYTES}B)"
     return
   fi
 
@@ -163,21 +163,21 @@ maybe_trigger_dream_cycle() {
     return
   fi
 
-  log "DC size trigger FIRED: observations.md ${bytes}B > ${TR_OBS_TRIGGER_BYTES}B — triggering Dream Cycle"
+  log "DC size trigger FIRED: observations.md ${bytes}B > ${TR_OBS_TRIGGER_BYTES}B — triggering Sweet Dreams"
   write_dc_cooldown
 
   # Use openclaw CLI to trigger the cron job
   if command -v openclaw &>/dev/null; then
     openclaw cron run "$TR_DREAM_CYCLE_JOB_ID" >> "$LOG" 2>&1 &
-    log "Dream Cycle cron enqueued (job: $TR_DREAM_CYCLE_JOB_ID)"
+    log "Sweet Dreams cron enqueued (job: $TR_DREAM_CYCLE_JOB_ID)"
   else
-    log "WARNING: openclaw CLI not found — cannot trigger Dream Cycle automatically"
+    log "WARNING: openclaw CLI not found — cannot trigger Sweet Dreams automatically"
   fi
 }
 
 trigger_observer() {
   if dream_cycle_running; then
-    log "Dream Cycle lock active — suppressing reactive observer trigger (lines: $ACCUMULATED_LINES)"
+    log "Sweet Dreams lock active — suppressing reactive observer trigger (lines: $ACCUMULATED_LINES)"
     return
   fi
   if in_cooldown; then
@@ -190,7 +190,7 @@ trigger_observer() {
   OPENCLAW_WORKSPACE="$WORKSPACE" "$SKILL_DIR/scripts/observer-agent.sh" >> "$LOG" 2>&1 &
   log "Observer started (PID $!)"
 
-  # After firing Observer, check if observations.md warrants a Dream Cycle trigger
+  # After firing Observer, check if observations.md warrants a Sweet Dreams trigger
   maybe_trigger_dream_cycle
 }
 

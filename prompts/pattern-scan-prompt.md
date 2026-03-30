@@ -44,7 +44,7 @@ Low confidence proposals MUST include:
 ## Step 3 — Write Proposals
 For each qualifying pattern, write a proposal via:
 ```
-bash $SKILL_DIR/scripts/dream-cycle.sh write-staging memory/dream-staging/YYYYMMDD-HHMMSS-[type].md '<json>'
+bash $SKILL_DIR/scripts/sweet-dreams.sh write-staging memory/dream-staging/YYYYMMDD-HHMMSS-[type].md '<json>'
 ```
 
 JSON payload format:
@@ -73,6 +73,6 @@ Reply with:
 
 ## Constraints
 - Do NOT modify observations.md
-- Do NOT call dream-cycle.sh archive, update-observations, rollback, or validate
+- Do NOT call sweet-dreams.sh archive, update-observations, rollback, or validate
 - Do NOT promote `context` type observations
 - Frontier protection: never propose archiving or collapsing observations containing: `frontier`, `open question`, `OQ-`, `unresolved branch`, `paths_ruled_out`

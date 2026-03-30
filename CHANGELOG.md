@@ -27,11 +27,11 @@ All notable changes to Total Recall are documented here.
 
 ## [2.2.0] - 2026-03-14
 
-### Changed: Dream Cycle Performance Split
+### Changed: Sweet Dreams Performance Split
 
-**The problem:** The Dream Cycle nightly job had accumulated features over 3 weeks of Phase 2 development (decay, type classification, confidence scoring, chunking, 4-5 semantic hooks per item, and 7-day pattern scanning). Each feature was individually justified, but together they pushed run times from ~5 minutes to 13+ minutes. Two consecutive nights hit the 900-second timeout and produced no output at all. That's worse than any individual feature being slightly less thorough.
+**The problem:** The Sweet Dreams nightly job had accumulated features over 3 weeks of Phase 2 development (decay, type classification, confidence scoring, chunking, 4-5 semantic hooks per item, and 7-day pattern scanning). Each feature was individually justified, but together they pushed run times from ~5 minutes to 13+ minutes. Two consecutive nights hit the 900-second timeout and produced no output at all. That's worse than any individual feature being slightly less thorough.
 
-**The fix:** Split the Dream Cycle into two jobs and trim the fat.
+**The fix:** Split the Sweet Dreams into two jobs and trim the fat.
 
 #### Nightly core job (02:30, every night)
 Runs decay, classification, confidence scoring, chunking, archiving, and semantic hooks. Everything that directly maintains `observations.md` health.
@@ -113,16 +113,16 @@ Running this weekly instead of nightly means a qualifying pattern detected on We
 
 ## [1.5.0] - 2026-02-28
 
-### Added: Importance Decay and Pattern Promotion (Dream Cycle)
+### Added: Importance Decay and Pattern Promotion (Sweet Dreams)
 
-Full Dream Cycle feature set now live. All features validated in production.
+Full Sweet Dreams feature set now live. All features validated in production.
 
 **Production metrics:** 46 observations analysed, 12 archived, 4,200 to 2,435 tokens (42% reduction), zero false archives.
 
 #### Importance Decay
 - Per-type daily decay curves applied to importance scores: `event` (-0.5/day), `fact` (-0.1/day), `preference` (-0.02/day), `rule`/`habit`/`goal` (0, never decay)
-- Archive threshold set at 3.0. Items that decay below 3.0 are queued for archival on the next Dream Cycle run
-- `cmd_decay` subcommand added to `dream-cycle.sh`
+- Archive threshold set at 3.0. Items that decay below 3.0 are queued for archival on the next Sweet Dreams run
+- `cmd_decay` subcommand added to `sweet-dreams.sh`
 - `scripts/backfill-importance.sh` — one-time backfill for observations that predate importance scoring (requires `ANTHROPIC_API_KEY`)
 - First live run: 25 observations decayed, zero items lost
 
@@ -148,12 +148,12 @@ Full Dream Cycle feature set now live. All features validated in production.
 
 ## [1.3.0] - 2026-02-26
 
-### Added: Multi-Hook Retrieval, Confidence Scoring, Memory Type System, Observation Chunking (Dream Cycle)
+### Added: Multi-Hook Retrieval, Confidence Scoring, Memory Type System, Observation Chunking (Sweet Dreams)
 
-Four Dream Cycle features now validated and live.
+Four Sweet Dreams features now validated and live.
 
 #### Multi-Hook Retrieval
-- Dream Cycle generates 4-5 alternative semantic hooks per archived observation
+- Sweet Dreams generates 4-5 alternative semantic hooks per archived observation
 - Addresses vocabulary mismatch: searches using different words than the original still find the memory
 - Hooks use synonyms, related terms, problem descriptions, and solution descriptions
 
@@ -170,8 +170,8 @@ Four Dream Cycle features now validated and live.
 - Backward compatible — observations without type tags remain fully valid
 
 #### Observation Chunking
-- Dream Cycle compresses clusters of 3+ related observations into single summary chunk entries
-- Chunk archive written to `memory/archive/chunks/YYYY-MM-DD.md` via `dream-cycle.sh chunk`
+- Sweet Dreams compresses clusters of 3+ related observations into single summary chunk entries
+- Chunk archive written to `memory/archive/chunks/YYYY-MM-DD.md` via `sweet-dreams.sh chunk`
 - Source observations archived; a single chunk hook replaces them in `observations.md`
 - Production metrics: 74.9% token reduction (11,015 to 2,769 tokens), 6 chunks from 36 source observations, zero false archives
 
@@ -190,19 +190,19 @@ Four Dream Cycle features now validated and live.
 ## [1.1.0] - 2026-02-23
 
 ### Added
-- **Dream Cycle (Layer 6)** — nightly memory consolidation
+- **Sweet Dreams (Layer 6)** — nightly memory consolidation
   - 9-stage pipeline: Preflight, Read, Classify, Collapse duplicates, Future-date protection, Archive, Semantic hooks, Write, Validate
   - Git snapshot before every write (automatic rollback on failure)
   - Semantic hooks left behind for searchable archive references
   - Dream logs and metrics JSON output
-- `scripts/dream-cycle.sh` — file operations helper (archive, update, validate, rollback)
-- `prompts/dream-cycle-prompt.md` — full agent prompt for the Dreamer
+- `scripts/sweet-dreams.sh` — file operations helper (archive, update, validate, rollback)
+- `prompts/sweet-dreams-prompt.md` — full agent prompt for the Dreamer
 - `schemas/observation-format.md` — extended observation metadata format
-- Setup script now creates Dream Cycle directories
-- README and SKILL.md updated with Dream Cycle docs and setup instructions
+- Setup script now creates Sweet Dreams directories
+- README and SKILL.md updated with Sweet Dreams docs and setup instructions
 
 ### Fixed
-- Hardcoded workspace paths in dream cycle prompt replaced with portable `$SKILL_DIR` variables
+- Hardcoded workspace paths in sweet dreams prompt replaced with portable `$SKILL_DIR` variables
 - Broken script path in `config/memory-flush.json`
 - Wrong path in `templates/AGENTS-snippet.md`
 

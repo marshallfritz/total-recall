@@ -25,7 +25,7 @@ info() { echo "$*"; }
 ensure_staging_dir() {
   if [ ! -d "$STAGING_DIR" ]; then
     err "Staging directory does not exist: $STAGING_DIR"
-    err "Run dream-cycle.sh preflight to initialise directories."
+    err "Run sweet-dreams.sh preflight to initialise directories."
     exit 1
   fi
 }

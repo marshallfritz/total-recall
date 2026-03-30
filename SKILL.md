@@ -225,9 +225,9 @@ Edit these to match your agent's personality and priorities.
 
 ---
 
-## Dream Cycle
+## Sweet Dreams
 
-The Dream Cycle is an optional nightly agent that runs after hours to consolidate `observations.md`. It archives stale items and adds semantic hooks so nothing useful is actually lost. Context stays lean; everything remains findable.
+The Sweet Dreams is an optional nightly agent that runs after hours to consolidate `observations.md`. It archives stale items and adds semantic hooks so nothing useful is actually lost. Context stays lean; everything remains findable.
 
 ### What It Does
 
@@ -252,23 +252,23 @@ The Dream Cycle is an optional nightly agent that runs after hours to consolidat
 
 ### Setup
 
-1. Run `bash skills/total-recall/scripts/setup.sh` — creates Dream Cycle directories automatically.
+1. Run `bash skills/total-recall/scripts/setup.sh` — creates Sweet Dreams directories automatically.
 
 2. Add the nightly cron job as a full agent turn:
    ```
-   # Dream Cycle — nightly (3am recommended; adjust to your timezone)
-   # The dream cycle runs as a full agent turn — NOT as a direct bash call.
-   # dream-cycle.sh is a file operations helper called BY the agent, not the entry point.
+   # Sweet Dreams — nightly (3am recommended; adjust to your timezone)
+   # The sweet dreams runs as a full agent turn — NOT as a direct bash call.
+   # sweet-dreams.sh is a file operations helper called BY the agent, not the entry point.
    #
    # 0 3 * * * bash -c 'source ~/.openclaw/shared/secrets/openclaw-secrets.env \
    #   && openclaw agent --agent main \
-   #   --message "Run the Total Recall Dream Cycle. Follow the instructions in \
-   # $WORKSPACE/skills/total-recall/prompts/dream-cycle-prompt.md exactly. \
+   #   --message "Run the Total Recall Sweet Dreams. Follow the instructions in \
+   # $WORKSPACE/skills/total-recall/prompts/sweet-dreams-prompt.md exactly. \
    # Use READ_ONLY_MODE=false and DREAM_PHASE=1." \
-   #   --json >> $WORKSPACE/logs/dream-cycle.log 2>&1'
+   #   --json >> $WORKSPACE/logs/sweet-dreams.log 2>&1'
    ```
 
-3. Configure your cron agent using `prompts/dream-cycle-prompt.md` as the system prompt. Recommended models: Claude Sonnet for the Dreamer (analysis + decisions), DeepSeek v3.2 for the Observer (cheap, fast).
+3. Configure your cron agent using `prompts/sweet-dreams-prompt.md` as the system prompt. Recommended models: Claude Sonnet for the Dreamer (analysis + decisions), DeepSeek v3.2 for the Observer (cheap, fast).
 
 4. Start with `READ_ONLY_MODE=true` for the first few nights. Check `memory/dream-logs/` after each run to verify what it would have archived.
 
@@ -285,9 +285,9 @@ The Dream Cycle is an optional nightly agent that runs after hours to consolidat
 
 | File | Description |
 |------|-------------|
-| `scripts/dream-cycle.sh` | Shell helper called **by the agent** (not a standalone runner): preflight, archive, update-observations, write-log, write-metrics, validate, rollback |
-| `prompts/dream-cycle-prompt.md` | Agent prompt for the nightly Dream Cycle run |
-| `dream-cycle/README.md` | Dream Cycle quick reference |
+| `scripts/sweet-dreams.sh` | Shell helper called **by the agent** (not a standalone runner): preflight, archive, update-observations, write-log, write-metrics, validate, rollback |
+| `prompts/sweet-dreams-prompt.md` | Agent prompt for the nightly Sweet Dreams run |
+| `dream-cycle/README.md` | Sweet Dreams quick reference |
 | `schemas/observation-format.md` | Extended observation metadata format |
 
 ### Directories Created
@@ -301,7 +301,7 @@ memory/
   dream-staging/         # Pattern promotion proposals awaiting human review
   .dream-backups/        # Pre-run safety backups
 research/
-  dream-cycle-metrics/
+  sweet-dreams-metrics/
     daily/               # JSON metrics per night
 ```
 
@@ -323,11 +323,11 @@ research/
 - Check `inotify-tools` is installed: `which inotifywait`
 - View watcher logs: `journalctl --user -u total-recall-watcher -f`
 
-**Dream Cycle archiving too aggressively?**
+**Sweet Dreams archiving too aggressively?**
 - Enable `READ_ONLY_MODE=true` and review dream logs before going live
 - Adjust `DREAM_TOKEN_TARGET` upward to archive less per run
 
-**Dream Cycle not archiving enough?**
+**Sweet Dreams not archiving enough?**
 - Lower `DREAM_TOKEN_TARGET` to trigger more aggressive consolidation
 
 ---

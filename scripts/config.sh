@@ -8,21 +8,21 @@
 # See: cre/TRStrategyBootstrap.md §Lock Format and Change Cascade Registry
 #
 # Scripts that source this file:
-#   - dream-cycle.sh
-#   - dream-cycle-runner.sh
+#   - sweet-dreams.sh
+#   - sweet-dreams-runner.sh
 #   - preflight-archive.sh
 #   - observer-agent.sh
 #   - observer-watcher-macos.sh
 
 # ── Lock settings ─────────────────────────────────────────────────────────────
 
-# Max age for a valid dream-cycle.lock (seconds).
+# Max age for a valid sweet-dreams.lock (seconds).
 # Must exceed cron timeout (1200s) to prevent false stale-lock detection.
 TR_LOCK_MAX_AGE=1500  # 25 min
 
 # ── File size thresholds ──────────────────────────────────────────────────────
 
-# Hard ceiling — Dream Cycle reliably fails above this
+# Hard ceiling — Sweet Dreams reliably fails above this
 TR_OBS_CEILING_BYTES=40960       # 40KB
 
 # Safe floor — proven completion threshold for Haiku/Gemini Flash
@@ -47,7 +47,7 @@ TR_PHASE2_MIN_AGE_SPREAD_DAYS=7
 
 # ── Event-driven DC trigger settings ─────────────────────────────────────────
 
-# Size threshold at which watcher triggers Dream Cycle (proactive, below ceiling)
+# Size threshold at which watcher triggers Sweet Dreams (proactive, below ceiling)
 TR_OBS_TRIGGER_BYTES=30720           # 30KB
 
 # Cooldown between watcher-triggered DC runs (prevents re-trigger every Observer fire)
@@ -55,7 +55,7 @@ TR_DC_TRIGGER_COOLDOWN_SECS=1800     # 30 min
 
 # Cooldown file: TRIGGERED_EPOCH:COOLDOWN_ENDS_EPOCH
 # Check: $(date +%s) > COOLDOWN_ENDS_EPOCH → cooldown lifted
-TR_DC_COOLDOWN_FILE="logs/dream-cycle-cooldown.txt"
+TR_DC_COOLDOWN_FILE="logs/sweet-dreams-cooldown.txt"
 
 # ── Cron job IDs (for manual trigger reference) ───────────────────────────────
 

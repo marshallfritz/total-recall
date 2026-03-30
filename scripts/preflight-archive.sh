@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# preflight-archive.sh — Pre-Dream Cycle size gate
+# preflight-archive.sh — Pre-Sweet Dreams size gate
 # Runs at 4:30 AM EDT daily. If observations.md > 40KB, archives items
 # with dc:importance < 3.0 (minimal band: no-ops, duplicates, expired).
-# Items >= 3.0 are untouched. Dream Cycle runs at 5 AM on cleaned file.
+# Items >= 3.0 are untouched. Sweet Dreams runs at 5 AM on cleaned file.
 #
 # Usage:
 #   OPENCLAW_WORKSPACE=/path/to/workspace bash preflight-archive.sh
@@ -15,7 +15,7 @@ ARCHIVE_DIR="$WORKSPACE/memory/archive/observations"
 BACKUP_DIR="$WORKSPACE/memory/.dream-backups"
 LOG_FILE="$WORKSPACE/logs/preflight-archive.log"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DREAM_CYCLE="$SCRIPT_DIR/dream-cycle.sh"
+DREAM_CYCLE="$SCRIPT_DIR/sweet-dreams.sh"
 TODAY="$(date +%Y-%m-%d)"
 NOW="$(date '+%Y-%m-%dT%H:%M:%S')"
 # SIZE_CEILING_BYTES now sourced from config.sh via TR_OBS_CEILING_BYTES
@@ -29,7 +29,7 @@ log() {
 log "=== Preflight archive START ==="
 
 # ── Lock helpers (self-describing format: PID:CREATED:EXPIRES) ───────────────
-DREAM_LOCK="$WORKSPACE/logs/dream-cycle.lock"
+DREAM_LOCK="$WORKSPACE/logs/sweet-dreams.lock"
 # shellcheck source=config.sh
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
 DREAM_LOCK_MAX_AGE=$TR_LOCK_MAX_AGE
@@ -48,14 +48,14 @@ lock_is_expired() {
   fi
 }
 
-# ── Check for active Dream Cycle lock ────────────────────────────────────────
+# ── Check for active Sweet Dreams lock ────────────────────────────────────────
 if [[ -f "$DREAM_LOCK" ]]; then
   if lock_is_expired "$DREAM_LOCK"; then
     log "WARN: Stale lock detected (expiry passed). Removing and proceeding."
     rm -f "$DREAM_LOCK"
   else
     expires=$(cut -d: -f3 "$DREAM_LOCK" 2>/dev/null || echo "?")
-    log "ERROR: Dream Cycle lock active (expires: ${expires}). Aborting preflight archive to prevent race condition."
+    log "ERROR: Sweet Dreams lock active (expires: ${expires}). Aborting preflight archive to prevent race condition."
     log "=== Preflight archive END (aborted — DC lock active) ==="
     exit 1
   fi
@@ -227,7 +227,7 @@ log "   Backup:  $BACKUP_FILE"
 
 if (( NEW_BYTES > SIZE_CEILING_BYTES )); then
   log "⚠️  File still above ceiling after minimal archive (${NEW_BYTES}B > ${SIZE_CEILING_BYTES}B)"
-  log "   Manual archive of items 3.0–5.0 may be needed before Dream Cycle"
+  log "   Manual archive of items 3.0–5.0 may be needed before Sweet Dreams"
 fi
 
 log "=== Preflight archive END ==="

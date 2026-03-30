@@ -1,4 +1,4 @@
-# Total Recall: Dream Cycle
+# Total Recall: Sweet Dreams
 
 The overnight memory consolidation system. While you sleep, an agent reviews `observations.md`, archives stale items, and adds semantic hooks so nothing useful is actually lost.
 
@@ -10,7 +10,7 @@ Read more: [Do Agents Dream of Electric Sheep? I Built One That Does.](https://g
 
 ## How It Works
 
-The Dream Cycle runs as two separate jobs:
+The Sweet Dreams runs as two separate jobs:
 
 ### Nightly Core (every night, ~7 minutes)
 
@@ -56,8 +56,8 @@ Nothing is deleted. Every archived item is preserved in the archive and referenc
 
 | File | Description |
 |------|-------------|
-| `../scripts/dream-cycle.sh` | Shell helper for safe file operations (preflight, archive, update, validate, rollback, decay, chunk, write-staging) |
-| `../prompts/dream-cycle-prompt.md` | Agent prompt — paste into your Dream Cycle cron job |
+| `../scripts/sweet-dreams.sh` | Shell helper for safe file operations (preflight, archive, update, validate, rollback, decay, chunk, write-staging) |
+| `../prompts/sweet-dreams-prompt.md` | Agent prompt — paste into your Sweet Dreams cron job |
 | `../scripts/staging-review.sh` | Helper for reviewing pattern promotion proposals (list, show, approve, reject) |
 
 ---
@@ -71,10 +71,10 @@ Nothing is deleted. Every archived item is preserved in the archive and referenc
 
 2. Add a nightly cron job (3am or whenever you sleep):
    ```
-   0 3 * * * OPENCLAW_WORKSPACE=~/your-workspace bash ~/your-workspace/skills/total-recall/scripts/dream-cycle.sh preflight
+   0 3 * * * OPENCLAW_WORKSPACE=~/your-workspace bash ~/your-workspace/skills/total-recall/scripts/sweet-dreams.sh preflight
    ```
 
-3. Configure your cron agent to use `prompts/dream-cycle-prompt.md` as the system prompt.
+3. Configure your cron agent to use `prompts/sweet-dreams-prompt.md` as the system prompt.
 
 4. Set `READ_ONLY_MODE=true` for the first 2-3 nights. Check `memory/dream-logs/` after each run.
 
@@ -107,7 +107,7 @@ memory/
   dream-staging/         # Pattern promotion proposals (pending human review)
   .dream-backups/        # Pre-run backups of observations.md
 research/
-  dream-cycle-metrics/
+  sweet-dreams-metrics/
     daily/               # JSON metrics (YYYY-MM-DD.json)
 ```
 

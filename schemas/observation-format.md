@@ -1,17 +1,17 @@
 # Observation Format — Extended Schema (Phase 2)
 
-*Total Recall / Dream Cycle — Memory Type System*
-*Schema version: 2.0 | Author: Dream Cycle WP1 | 2026-02-23*
+*Total Recall / Sweet Dreams — Memory Type System*
+*Schema version: 2.0 | Author: Sweet Dreams WP1 | 2026-02-23*
 
 ---
 
 ## Overview
 
-This document defines the extended observation format introduced in Dream Cycle Phase 2 (WP1: Memory Type System). It is the reference for:
+This document defines the extended observation format introduced in Sweet Dreams Phase 2 (WP1: Memory Type System). It is the reference for:
 
-- The **Dream Cycle agent** — which reads and classifies observations using type metadata
+- The **Sweet Dreams agent** — which reads and classifies observations using type metadata
 - The **Observer** — which will optionally tag new observations at write time (Phase 3 enhancement)
-- The **decay function** (`dream-cycle.sh decay`, WP2) — which reads type and date to apply per-type TTL decay
+- The **decay function** (`sweet-dreams.sh decay`, WP2) — which reads type and date to apply per-type TTL decay
 
 Phase 1 observations (untagged) remain fully valid. The backward-compatibility rule ensures they are treated as `type: fact`, `ttl_days: 90` by default.
 
@@ -77,7 +77,7 @@ Importance is a float in `[0.0, 10.0]` that indicates how critical this observat
 
 ### Importance Decay (WP2)
 
-The `dream-cycle.sh decay` command applies daily decay to importance scores based on observation type. Decay is applied to the `dc:importance` field in the metadata comment.
+The `sweet-dreams.sh decay` command applies daily decay to importance scores based on observation type. Decay is applied to the `dc:importance` field in the metadata comment.
 
 **Decay rates per type:**
 
@@ -107,7 +107,7 @@ The `dream-cycle.sh decay` command applies daily decay to importance scores base
 
 **A goal observation:**
 ```markdown
-## Goal: Phase 2 Dream Cycle Live by Friday
+## Goal: Phase 2 Sweet Dreams Live by Friday
 <!-- dc:type=<type> dc:importance=<0.0-10.0> dc:ttl=<days> dc:confidence=<0.0-1.0> dc:source=<source-type> dc:date=<YYYY-MM-DD> -->
 ```
 
@@ -125,10 +125,10 @@ The `dream-cycle.sh decay` command applies daily decay to importance scores base
 | Phase | Who writes tags | Status |
 |-------|----------------|--------|
 | Phase 1 | Nobody — all observations are untagged | Live |
-| Phase 2 | Dream Cycle classifies types **mentally** during analysis; does not write tags to `observations.md` | Building |
+| Phase 2 | Sweet Dreams classifies types **mentally** during analysis; does not write tags to `observations.md` | Building |
 | Phase 3 | Observer tags new observations at write time using the `<!-- dc:... -->` format | Planned |
 
-**Phase 2 behaviour:** The Dream Cycle agent reads observations, assigns a type and TTL internally for archiving decisions, and reports the distribution in the dream log. It does **not** write `<!-- dc:... -->` tags back into `observations.md` — that is Phase 3 (Observer integration).
+**Phase 2 behaviour:** The Sweet Dreams agent reads observations, assigns a type and TTL internally for archiving decisions, and reports the distribution in the dream log. It does **not** write `<!-- dc:... -->` tags back into `observations.md` — that is Phase 3 (Observer integration).
 
 ---
 
@@ -144,7 +144,7 @@ importance: 5.0  (neutral default — medium importance)
 
 This means:
 - All existing Phase 1 observations are valid without modification
-- The dream cycle will never error on an untagged observation
+- The sweet dreams will never error on an untagged observation
 <!-- dc:type=<type> dc:importance=<0.0-10.0> dc:ttl=<days> dc:confidence=<0.0-1.0> dc:source=<source-type> dc:date=<YYYY-MM-DD> -->
 
 ---

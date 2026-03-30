@@ -30,14 +30,14 @@ OBSERVER_LOG="$WORKSPACE/logs/observer.log"
 MARKER_FILE="$MEMORY_DIR/.observer-last-run"
 HASH_FILE="$MEMORY_DIR/.observer-last-hash"
 LOCK_FILE="$WORKSPACE/logs/reflector.lock"
-DREAM_LOCK_FILE="$WORKSPACE/logs/dream-cycle.lock"
+DREAM_LOCK_FILE="$WORKSPACE/logs/sweet-dreams.lock"
 # shellcheck source=config.sh
 source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
 DREAM_LOCK_MAX_AGE=$TR_LOCK_MAX_AGE
 
 # Read expiry from self-describing lock file (format: PID:CREATED:EXPIRES)
 # Falls back to mtime-based check for legacy lock files.
-# NOTE: Keep in sync with dream-cycle.sh, preflight-archive.sh, observer-watcher-macos.sh
+# NOTE: Keep in sync with sweet-dreams.sh, preflight-archive.sh, observer-watcher-macos.sh
 # See: cre/TRStrategyBootstrap.md §Lock Format
 dream_lock_is_active() {
   local lock_file="$1"
@@ -82,15 +82,15 @@ if [ ! -f "$OBSERVER_PROMPT" ]; then
   exit 1
 fi
 
-# --- Dream Cycle lock check (suspend Observer while Dream Cycle is running) ---
+# --- Sweet Dreams lock check (suspend Observer while Sweet Dreams is running) ---
 if [ -f "$DREAM_LOCK_FILE" ]; then
   if dream_lock_is_active "$DREAM_LOCK_FILE"; then
     expires=$(cut -d: -f3 "$DREAM_LOCK_FILE" 2>/dev/null || echo "?")
-    log "Dream Cycle lock active (expires: ${expires}) — suspending Observer until run completes"
+    log "Sweet Dreams lock active (expires: ${expires}) — suspending Observer until run completes"
     echo "SKIPPED_DREAM_CYCLE_RUNNING"
     exit 0
   else
-    log "Stale Dream Cycle lock (expiry passed) — removing and proceeding"
+    log "Stale Sweet Dreams lock (expiry passed) — removing and proceeding"
     rm -f "$DREAM_LOCK_FILE"
   fi
 fi

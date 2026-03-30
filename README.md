@@ -8,7 +8,7 @@ Total Recall v2.0 keeps the existing v1.x stack intact:
 - Reflector
 - Session Recovery
 - Reactive Watcher
-- Dream Cycle
+- Sweet Dreams
 
 It also adds the Ambient Intelligence Engine (AIE): a configurable sensor and rumination pipeline that can watch external systems, think about what changed, maintain a preconscious buffer, and surface urgent items.
 
@@ -29,7 +29,7 @@ sudo apt install python3-yaml
 ### v1.x memory loop
 
 ```text
-Observer -> observations.md -> Reflector -> Dream Cycle -> session recovery / watcher
+Observer -> observations.md -> Reflector -> Sweet Dreams -> session recovery / watcher
 ```
 
 ### v2.0 Ambient Intelligence Engine
@@ -286,7 +286,7 @@ For best results, have your agent read `memory/rumination/learned-facts.json` an
 
 ## Existing v1.x Notes
 
-The original observer / reflector / dream-cycle flow still works as before. The v1.x scripts continue to read their existing environment variables and paths. The new AIE config does not remove that compatibility layer.
+The original observer / reflector / sweet-dreams flow still works as before. The v1.x scripts continue to read their existing environment variables and paths. The new AIE config does not remove that compatibility layer.
 
 See:
 
@@ -300,7 +300,7 @@ See:
 |------|---------|
 | `scripts/observer-agent.sh` | v1.x observer |
 | `scripts/reflector-agent.sh` | v1.x reflector |
-| `scripts/dream-cycle.sh` | v1.x nightly consolidation helper |
+| `scripts/sweet-dreams.sh` | v1.x nightly consolidation helper |
 | `scripts/sensor-sweep.sh` | AIE connector orchestrator |
 | `scripts/rumination-engine.sh` | AIE reasoning pass |
 | `scripts/preconscious-select.sh` | buffer scorer/selector |

@@ -251,7 +251,7 @@ Do NOT write if ALL of the following are true:
 - No unresolved/pending marker present
 - No CGP snippet signal present
 - Item falls into any of these categories:
-  - Observer / Reflector / Dream Cycle ran with no output ("ran cleanly", "nothing to process")
+  - Observer / Reflector / Sweet Dreams ran with no output ("ran cleanly", "nothing to process")
   - "User confirmed" / "user said yes" / "user agreed" / acknowledgment only
   - Process step describing HOW an action was taken (vs. WHAT resulted)
   - Message source metadata (gateway client name, device info, untrusted client)
