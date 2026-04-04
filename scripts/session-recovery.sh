@@ -53,19 +53,26 @@ pensive_inject() {
   fi
 
   local response
-  response=$(curl -sf --max-time 5 \
-    -H "Authorization: Bearer $pensive_token" \
-    "${pensive_url}/api/v1/context?q=" 2>/dev/null) || {
-    log "[pensive] API unreachable or error — skipping dual-path injection"
+  local attempt=0
+  while [ $attempt -lt 2 ]; do
+    response=$(curl -sf --max-time 5 \
+      -H "Authorization: Bearer $pensive_token" \
+      "${pensive_url}/api/v1/context?q=" 2>/dev/null) && break
+    attempt=$((attempt + 1))
+    if [ $attempt -lt 2 ]; then
+      log "[pensive] API attempt $attempt failed — retrying in 2s"
+      sleep 2
+    fi
+  done
+  if [ -z "$response" ]; then
+    log "[pensive] API unreachable after 2 attempts — skipping dual-path injection"
     return 0
-  }
-
-  [ -z "$response" ] && return 0
+  fi
 
   local formatted
   # Pass JSON via env var to avoid pipe+heredoc stdin conflict
   formatted=$(_PENSIVE_RESP="$response" python3 <<'PYEOF'
-import json, os, sys
+import json, os, sys, hashlib, datetime
 try:
     d = json.loads(os.environ['_PENSIVE_RESP'])
     data = d.get("data", {})
@@ -93,6 +100,10 @@ try:
             lines.append(f"- \U0001f7e2 [{item.get('band','?')}] {item.get('content','')}")
 
     if len(lines) > 1:
+        # Emit nonce: timestamp + 4-char hash of content — for startup compliance verification
+        ts = datetime.datetime.utcnow().strftime('%m%dT%H%M')
+        h4 = hashlib.md5('\n'.join(lines).encode()).hexdigest()[:4]
+        lines.append(f"<!-- pensive-token: {ts}-{h4} -->")
         print("\n".join(lines))
 except Exception as e:
     print(f"<!-- pensive-context: parse error: {e} -->", file=sys.stderr)
