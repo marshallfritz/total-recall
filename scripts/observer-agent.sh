@@ -397,6 +397,7 @@ with open(obs_file) as f:
 for line in text.splitlines():
     imp_m = re.search(r'dc:importance=([0-9.]+)', line)
     type_m = re.search(r'dc:type=(\w+)', line)
+    prov_m = re.search(r'dc:provenance_type=(\w+)', line)
     if not imp_m:
         continue
     importance = float(imp_m.group(1))
@@ -405,7 +406,10 @@ for line in text.splitlines():
     content = re.sub(r'^[\s\-]+', '', content).strip()
     if not content:
         continue
-    payload = json.dumps({"score": importance, "type": obs_type, "content": content})
+    payload_dict = {"score": importance, "type": obs_type, "content": content}
+    if prov_m and prov_m.group(1) != "observation":
+        payload_dict["provenance_type"] = prov_m.group(1)
+    payload = json.dumps(payload_dict)
     try:
         result = subprocess.run(
             [python, shim],

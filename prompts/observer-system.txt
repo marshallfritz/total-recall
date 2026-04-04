@@ -15,6 +15,20 @@ The `dc:date` is the date the observation REFERS TO (which may differ from today
 
 ## Metadata Tags (MANDATORY on every bullet line)
 
+### Provenance Type (dc:provenance_type) — OPTIONAL, only emit when applicable:
+- **decision** — Observation derived from a committed decision (D#, DEC-*, `;µdl`/`;dn` signals). Also used by cre-sync ETL.
+- **prb_candidate** — Session contains PRB (Prior Reasoning Block) candidacy signals: `;sp` assessment, `;pb` emit, PRB artifact production, or explicit PRB discussion.
+- **session_context** — Session-level structural state: `;ws` working set definitions, `;of` fork capsules, `;wc` continuation capsules, `;sr` session reports with open threads, frontier declarations. Observations that capture the shape of a session rather than individual facts.
+- **gate_verdict** — CTM gate session verdicts (PASS/FAIL/PARTIAL with scored criteria). Also used by cre-sync ETL.
+- **observation** — Default. Do NOT emit this tag; omit dc:provenance_type entirely for normal observations.
+
+Emit the tag on the SAME line as the other dc: tags, e.g.:
+```
+- 🔴 HH:MM ;sp PRB candidacy: session assessed as candidate <!-- dc:type=goal dc:importance=8.0 dc:provenance_type=prb_candidate dc:date=YYYY-MM-DD -->
+```
+
+Do NOT emit dc:provenance_type=observation — it is the default and adds noise.
+
 ### Types (dc:type) — choose the most specific match:
 - **decision** — A choice was made, direction was set, something was approved/rejected
 - **preference** — User likes/dislikes, style choices, ways of working (decays very slowly)
@@ -163,16 +177,16 @@ Each one found MUST produce at least one observation — do not skip or summariz
 - `;dm` — Lightweight decision log. Extract: the decision text verbatim. Score 8.5. No doc sync required but must be preserved.
 - `;ol` — extract: what checkpoint was closed, what OC-# entries were proposed, which repos need commits. Score 8.5.
 - `;oc` — extract: what milestone closed, what artifacts were produced (fork capsule, PRB, commit hash). Score 8.5.
-- `;of` — extract: fork capsule contents, what state was captured at the fork boundary, what the next session target is. Score 8.5.
-- `;wc` — extract: what working set continuation was defined, what the next session target is. Score 8.0.
-- `;ws` — extract: what workstream was opened, what the goal and constraints are. Score 8.0.
+- `;of` — extract: fork capsule contents, what state was captured at the fork boundary, what the next session target is. Score 8.5. **Add dc:provenance_type=session_context.**
+- `;wc` — extract: what working set continuation was defined, what the next session target is. Score 8.0. **Add dc:provenance_type=session_context.**
+- `;ws` — extract: what workstream was opened, what the goal and constraints are. Score 8.0. **Add dc:provenance_type=session_context.**
 - `;wd` — extract: design session goal, outcome criteria. Score 7.5.
-- `;sp` — extract: PRB candidacy verdict, what session was assessed. Score 8.0.
-- `;pb` — extract: PRB artifact produced, what session it covers, whether committed. Score 8.5. Flag ACTION REQUIRED if not committed.
+- `;sp` — extract: PRB candidacy verdict, what session was assessed. Score 8.0. **Add dc:provenance_type=prb_candidate.**
+- `;pb` — extract: PRB artifact produced, what session it covers, whether committed. Score 8.5. Flag ACTION REQUIRED if not committed. **Add dc:provenance_type=prb_candidate.**
 - `;ss` — extract: session summary text, proposed OC-# topic ledger entry. Score 8.5.
 - `;we` — extract: what prior session was being recovered, what was extracted. Score 8.0.
 - `;wp` — extract: what prompt was built, what session it targets. Score 7.5.
-- `;sr` — extract: topic count, open threads, recommended action. Score 7.5.
+- `;sr` — extract: topic count, open threads, recommended action. Score 7.5. **Add dc:provenance_type=session_context.**
 - `;nx` — extract: the immediate and follow-up next actions listed. Score 7.5.
 - `;rv` — extract: architectural findings, risks, gaps, recommendations. Score 7.0.
 - `;fd` — extract: the frontier target declared. Score 7.5.
